@@ -8,6 +8,7 @@ import FallOfWickets from "./components/FallOfWickets"
 import CreateTeam from "./pages/CreateTeam"
 import MatchSetup from "./components/MatchSetup"
 import BattingScorecard from "./components/BattingScorecard"
+import BowlingScorecard from "./components/BowlingScorecard"
 
 export default function App() {
 
@@ -28,6 +29,12 @@ const addRuns = (runs) => {
     setBalls(prev => prev + 1)
 
     setHistory(prev => [...prev, runs])
+
+    setBowler(prev => ({
+    ...prev,
+    runs: prev.runs + runs,
+    balls: prev.balls + 1,
+  }))
 
     setBatters(prev => {
 
@@ -80,6 +87,12 @@ const addWicket = () => {
 
     setHistory(prev => [...prev, "W"])
 
+    setBowler(prev => ({
+        ...prev,
+        wickets: prev.wickets + 1,
+        balls: prev.balls + 1,
+      }))
+
     setFallOfWickets(prev => [
       ...prev,
       wicketInfo,
@@ -99,29 +112,40 @@ const addWicket = () => {
     })
   }
 
-  const addWide = () => {
-    setScore(score + 1)
+const addWide = () => {
+
+    setScore(prev => prev + 1)
 
     setHistory(prev => [...prev, "Wd"])
+
+    setBowler(prev => ({
+      ...prev,
+      runs: prev.runs + 1,
+    }))
   }
 
-  const addNoBall = () => {
-    setScore(score + 1)
-    setFreeHit(true)
+const addNoBall = () => {
+
+    setScore(prev => prev + 1)
 
     setHistory(prev => [...prev, "Nb"])
 
-    setfreeHit(true)
+    setBowler(prev => ({
+      ...prev,
+      runs: prev.runs + 1,
+    }))
+
+    setFreeHit(true)
   }
 
-  const overs =
+const overs =
     `${Math.floor(balls / 6)}.${balls % 6}`
 
-  const addTeam = (team) => {
+const addTeam = (team) => {
     setTeams(prev => [...prev, team])
   }
 
-  const [batters, setBatters] = useState([
+const [batters, setBatters] = useState([
     {
       name: "Batsman 1",
       runs: 0,
@@ -134,8 +158,15 @@ const addWicket = () => {
     },
   ])
 
-  const [currentStriker, setCurrentStriker] =
+const [currentStriker, setCurrentStriker] =
     useState(0)
+
+const [bowler, setBowler] = useState({
+    name: "Bowler 1",
+    runs: 0,
+    wickets: 0,
+    balls: 0,
+  })
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -176,6 +207,8 @@ const addWicket = () => {
           batters={batters}
           currentStriker={currentStriker}
         />
+
+        <BowlingScorecard bowler={bowler} />
 
       </div>
     </div>
