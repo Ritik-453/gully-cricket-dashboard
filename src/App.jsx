@@ -6,6 +6,8 @@ import MatchControls from "./components/MatchControls"
 import BallHistory from "./components/BallHistory"
 import FallOfWickets from "./components/FallOfWickets"
 import CreateTeam from "./pages/CreateTeam"
+import MatchSetup from "./components/MatchSetup"
+import BattingScorecard from "./components/BattingScorecard"
 
 export default function App() {
 
@@ -15,22 +17,47 @@ export default function App() {
   const [freeHit, setFreeHit] = useState(false)
   const [history, setHistory] = useState([])
   const [fallOfWickets, setFallOfWickets] = useState([])
+  const [teams, setTeams] = useState([])
+  const [teamA, setTeamA] = useState(null)
+  const [teamB, setTeamB] = useState(null)
 
-  const addRuns = (runs) => {
+const addRuns = (runs) => {
 
     setScore(prev => prev + runs)
+
     setBalls(prev => prev + 1)
 
     setHistory(prev => [...prev, runs])
+
+    setBatters(prev => {
+
+      const updated = [...prev]
+
+      updated[currentStriker].runs += runs
+
+      updated[currentStriker].balls += 1
+
+      return updated
+    })
+
+    if (
+      runs === 1 ||
+      runs === 3
+    ) {
+      setCurrentStriker(prev =>
+        prev === 0 ? 1 : 0
+      )
+    }
 
     if (freeHit) {
       setFreeHit(false)
     }
   }
 
-  const addWicket = () => {
+const addWicket = () => {
 
     if (freeHit) {
+
       alert("Cannot get out on Free Hit!")
 
       setBalls(prev => prev + 1)
@@ -43,6 +70,7 @@ export default function App() {
     }
 
     const newWicket = wickets + 1
+
     const wicketInfo =
       `${score}/${newWicket} (${Math.floor(balls / 6)}.${balls % 6})`
 
@@ -56,6 +84,19 @@ export default function App() {
       ...prev,
       wicketInfo,
     ])
+
+    setBatters(prev => {
+
+      const updated = [...prev]
+
+      updated[currentStriker] = {
+        name: `Batsman ${newWicket + 2}`,
+        runs: 0,
+        balls: 0,
+      }
+
+      return updated
+    })
   }
 
   const addWide = () => {
@@ -76,6 +117,26 @@ export default function App() {
   const overs =
     `${Math.floor(balls / 6)}.${balls % 6}`
 
+  const addTeam = (team) => {
+    setTeams(prev => [...prev, team])
+  }
+
+  const [batters, setBatters] = useState([
+    {
+      name: "Batsman 1",
+      runs: 0,
+      balls: 0,
+    },
+    {
+      name: "Batsman 2",
+      runs: 0,
+      balls: 0,
+    },
+  ])
+
+  const [currentStriker, setCurrentStriker] =
+    useState(0)
+
   return (
     <div className="min-h-screen bg-black text-white">
       <Navbar />
@@ -87,6 +148,7 @@ export default function App() {
           wickets={wickets}
           overs={overs}
           freeHit={freeHit}
+          teamA={teamA}
         />
 
         <MatchControls
@@ -102,7 +164,18 @@ export default function App() {
           fallOfWickets={fallOfWickets}
         />
 
-        <CreateTeam />
+        <CreateTeam addTeam={addTeam} />
+
+        <MatchSetup
+          teams={teams}
+          setTeamA={setTeamA}
+          setTeamB={setTeamB}
+        />
+
+        <BattingScorecard
+          batters={batters}
+          currentStriker={currentStriker}
+        />
 
       </div>
     </div>

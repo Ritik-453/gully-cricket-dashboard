@@ -3,11 +3,12 @@ export default function ScoreBoard({
   wickets,
   overs,
   freeHit,
+  teamA,
 }) {
   return (
     <div className="bg-zinc-800 p-6 rounded-2xl shadow-xl mt-6">
       <h2 className="text-3xl font-bold">
-        Thunder Warriors
+        {teamA?.teamName || "Select Team"}
       </h2>
 
       <div className="mt-4 text-5xl font-extrabold">

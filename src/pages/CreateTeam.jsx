@@ -1,6 +1,8 @@
 import { useState } from "react"
 
-export default function CreateTeam() {
+export default function CreateTeam({
+    addTeam,
+}) {
 
   const [teamName, setTeamName] = useState("")
   const [players, setPlayers] = useState([
@@ -33,7 +35,7 @@ export default function CreateTeam() {
       captain,
     }
 
-    console.log(team)
+    addTeam(team)
 
     alert("Team Created!")
   }
