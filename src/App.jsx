@@ -1,10 +1,11 @@
 import { useState } from "react"
 
-import BallHistory from "./components/BallHistory"
-import FallOfWickets from "./components/FallOfWickets"
 import Navbar from "./components/Navbar"
 import ScoreBoard from "./components/ScoreBoard"
 import MatchControls from "./components/MatchControls"
+import BallHistory from "./components/BallHistory"
+import FallOfWickets from "./components/FallOfWickets"
+import CreateTeam from "./pages/CreateTeam"
 
 export default function App() {
 
@@ -100,6 +101,8 @@ export default function App() {
         <FallOfWickets
           fallOfWickets={fallOfWickets}
         />
+
+        <CreateTeam />
 
       </div>
     </div>
