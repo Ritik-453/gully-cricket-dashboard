@@ -5,37 +5,179 @@ import ScoreBoard from "./components/ScoreBoard"
 import MatchControls from "./components/MatchControls"
 import BallHistory from "./components/BallHistory"
 import FallOfWickets from "./components/FallOfWickets"
-import CreateTeam from "./pages/CreateTeam"
-import MatchSetup from "./components/MatchSetup"
 import BattingScorecard from "./components/BattingScorecard"
 import BowlingScorecard from "./components/BowlingScorecard"
+import MatchSetup from "./components/MatchSetup"
+
+import CreateTeam from "./pages/CreateTeam"
 
 export default function App() {
 
+  // SCORE STATES
   const [score, setScore] = useState(0)
   const [wickets, setWickets] = useState(0)
   const [balls, setBalls] = useState(0)
+
+  // MATCH STATES
+  const [maxOvers, setMaxOvers] = useState(2)
+
+  const [innings, setInnings] = useState(1)
+
+  const [target, setTarget] = useState(null)
+
+  const [winner, setWinner] = useState("")
+
+  // FREE HIT
   const [freeHit, setFreeHit] = useState(false)
+
+  // HISTORY
   const [history, setHistory] = useState([])
-  const [fallOfWickets, setFallOfWickets] = useState([])
+
+  // FALL OF WICKETS
+  const [fallOfWickets, setFallOfWickets] =
+    useState([])
+
+  // TEAMS
   const [teams, setTeams] = useState([])
+
   const [teamA, setTeamA] = useState(null)
+
   const [teamB, setTeamB] = useState(null)
 
-const addRuns = (runs) => {
+  // BATTERS
+  const [batters, setBatters] = useState([
+    {
+      name: "Batsman 1",
+      runs: 0,
+      balls: 0,
+    },
+    {
+      name: "Batsman 2",
+      runs: 0,
+      balls: 0,
+    },
+  ])
 
-    setScore(prev => prev + runs)
+  const [currentStriker, setCurrentStriker] =
+    useState(0)
 
-    setBalls(prev => prev + 1)
+  // BOWLER
+  const [bowler, setBowler] = useState({
+    name: "Bowler 1",
+    runs: 0,
+    wickets: 0,
+    balls: 0,
+  })
+
+  // CREATE TEAM
+  const addTeam = (team) => {
+    setTeams(prev => [...prev, team])
+  }
+
+  // MATCH END LOGIC
+  const checkMatchEnd = (
+    updatedBalls,
+    updatedScore,
+    updatedWickets
+  ) => {
+
+    const totalBalls = maxOvers * 6
+
+    // FIRST INNINGS END
+    if (
+      innings === 1 &&
+      (
+        updatedBalls >= totalBalls ||
+        updatedWickets >= 10
+      )
+    ) {
+
+      setTarget(updatedScore + 1)
+
+      alert(
+        `Innings Over! Target is ${updatedScore + 1}`
+      )
+
+      // RESET FOR SECOND INNINGS
+      setScore(0)
+      setWickets(0)
+      setBalls(0)
+
+      setHistory([])
+
+      setFallOfWickets([])
+
+      setBatters([
+        {
+          name: "Batsman 1",
+          runs: 0,
+          balls: 0,
+        },
+        {
+          name: "Batsman 2",
+          runs: 0,
+          balls: 0,
+        },
+      ])
+
+      setBowler({
+        name: "Bowler 1",
+        runs: 0,
+        wickets: 0,
+        balls: 0,
+      })
+
+      setInnings(2)
+
+      return
+    }
+
+    // SECOND INNINGS WIN
+    if (
+      innings === 2 &&
+      target &&
+      updatedScore >= target
+    ) {
+
+      setWinner(
+        `${teamB?.teamName || "Team B"} Won`
+      )
+
+      alert("Match Finished!")
+
+      return
+    }
+
+    // SECOND INNINGS LOSE
+    if (
+      innings === 2 &&
+      (
+        updatedBalls >= totalBalls ||
+        updatedWickets >= 10
+      )
+    ) {
+
+      setWinner(
+        `${teamA?.teamName || "Team A"} Won`
+      )
+
+      alert("Match Finished!")
+    }
+  }
+
+  // ADD RUNS
+  const addRuns = (runs) => {
+
+    const updatedScore = score + runs
+    const updatedBalls = balls + 1
+
+    setScore(updatedScore)
+
+    setBalls(updatedBalls)
 
     setHistory(prev => [...prev, runs])
 
-    setBowler(prev => ({
-    ...prev,
-    runs: prev.runs + runs,
-    balls: prev.balls + 1,
-  }))
-
+    // BATTER UPDATE
     setBatters(prev => {
 
       const updated = [...prev]
@@ -47,6 +189,14 @@ const addRuns = (runs) => {
       return updated
     })
 
+    // BOWLER UPDATE
+    setBowler(prev => ({
+      ...prev,
+      runs: prev.runs + runs,
+      balls: prev.balls + 1,
+    }))
+
+    // STRIKE ROTATION
     if (
       runs === 1 ||
       runs === 3
@@ -56,12 +206,20 @@ const addRuns = (runs) => {
       )
     }
 
+    // FREE HIT RESET
     if (freeHit) {
       setFreeHit(false)
     }
+
+    checkMatchEnd(
+      updatedBalls,
+      updatedScore,
+      wickets
+    )
   }
 
-const addWicket = () => {
+  // WICKET
+  const addWicket = () => {
 
     if (freeHit) {
 
@@ -76,6 +234,8 @@ const addWicket = () => {
       return
     }
 
+    const updatedBalls = balls + 1
+
     const newWicket = wickets + 1
 
     const wicketInfo =
@@ -83,21 +243,24 @@ const addWicket = () => {
 
     setWickets(newWicket)
 
-    setBalls(prev => prev + 1)
+    setBalls(updatedBalls)
 
     setHistory(prev => [...prev, "W"])
 
-    setBowler(prev => ({
-        ...prev,
-        wickets: prev.wickets + 1,
-        balls: prev.balls + 1,
-      }))
-
+    // FALL OF WICKETS
     setFallOfWickets(prev => [
       ...prev,
       wicketInfo,
     ])
 
+    // BOWLER UPDATE
+    setBowler(prev => ({
+      ...prev,
+      wickets: prev.wickets + 1,
+      balls: prev.balls + 1,
+    }))
+
+    // NEW BATTER
     setBatters(prev => {
 
       const updated = [...prev]
@@ -110,9 +273,16 @@ const addWicket = () => {
 
       return updated
     })
+
+    checkMatchEnd(
+      updatedBalls,
+      score,
+      newWicket
+    )
   }
 
-const addWide = () => {
+  // WIDE
+  const addWide = () => {
 
     setScore(prev => prev + 1)
 
@@ -124,7 +294,8 @@ const addWide = () => {
     }))
   }
 
-const addNoBall = () => {
+  // NO BALL
+  const addNoBall = () => {
 
     setScore(prev => prev + 1)
 
@@ -138,50 +309,59 @@ const addNoBall = () => {
     setFreeHit(true)
   }
 
-const overs =
+  // OVERS
+  const overs =
     `${Math.floor(balls / 6)}.${balls % 6}`
-
-const addTeam = (team) => {
-    setTeams(prev => [...prev, team])
-  }
-
-const [batters, setBatters] = useState([
-    {
-      name: "Batsman 1",
-      runs: 0,
-      balls: 0,
-    },
-    {
-      name: "Batsman 2",
-      runs: 0,
-      balls: 0,
-    },
-  ])
-
-const [currentStriker, setCurrentStriker] =
-    useState(0)
-
-const [bowler, setBowler] = useState({
-    name: "Bowler 1",
-    runs: 0,
-    wickets: 0,
-    balls: 0,
-  })
 
   return (
     <div className="min-h-screen bg-black text-white">
+
       <Navbar />
 
-      <div className="p-6 max-w-2xl mx-auto">
+      <div className="p-6 max-w-4xl mx-auto">
 
+        {/* OVERS INPUT */}
+        <div className="mb-6">
+
+          <label className="block mb-2">
+            Total Overs
+          </label>
+
+          <input
+            type="number"
+            value={maxOvers}
+            onChange={(e) =>
+              setMaxOvers(Number(e.target.value))
+            }
+            className="bg-zinc-800 p-3 rounded-xl w-full"
+          />
+
+        </div>
+
+        {/* SCOREBOARD */}
         <ScoreBoard
           score={score}
           wickets={wickets}
           overs={overs}
           freeHit={freeHit}
-          teamA={teamA}
+          teamA={innings === 1 ? teamA : teamB}
+          innings={innings}
+          target={target}
+          winner={winner}
         />
 
+        {/* BATTING */}
+        <BattingScorecard
+          batters={batters}
+          currentStriker={currentStriker}
+        />
+
+        {/* BOWLING */}
+        <BowlingScorecard
+          bowler={bowler}
+        />
+
+        {/* CONTROLS */}
         <MatchControls
           addRuns={addRuns}
           addWicket={addWicket}
@@ -189,28 +369,30 @@ const [bowler, setBowler] = useState({
           addNoBall={addNoBall}
         />
 
-        <BallHistory history={history} />
+        {/* HISTORY */}
+        <BallHistory
+          history={history}
+        />
 
+        {/* FOW */}
         <FallOfWickets
           fallOfWickets={fallOfWickets}
         />
 
-        <CreateTeam addTeam={addTeam} />
+        {/* CREATE TEAM */}
+        <CreateTeam
+          addTeam={addTeam}
+        />
 
+        {/* MATCH SETUP */}
         <MatchSetup
           teams={teams}
           setTeamA={setTeamA}
           setTeamB={setTeamB}
         />
 
-        <BattingScorecard
-          batters={batters}
-          currentStriker={currentStriker}
-        />
-
-        <BowlingScorecard bowler={bowler} />
-
       </div>
+
     </div>
   )
 }
