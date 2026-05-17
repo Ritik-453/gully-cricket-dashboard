@@ -1,20 +1,32 @@
 import { useState } from "react"
 
+import { db } from "../firebase"
+
+import {
+  collection,
+  addDoc,
+} from "firebase/firestore"
+
 export default function CreateTeam({
-    addTeam,
+  addTeam,
 }) {
 
-  const [teamName, setTeamName] = useState("")
-  const [players, setPlayers] = useState([
-    "",
-    "",
-    "",
-    "",
-    "",
-  ])
+  const [teamName, setTeamName] =
+    useState("")
 
-  const [captain, setCaptain] = useState("")
+  const [players, setPlayers] =
+    useState([
+      "",
+      "",
+      "",
+      "",
+      "",
+    ])
 
+  const [captain, setCaptain] =
+    useState("")
+
+  // PLAYER INPUT CHANGE
   const handlePlayerChange = (
     index,
     value
@@ -27,17 +39,72 @@ export default function CreateTeam({
     setPlayers(updatedPlayers)
   }
 
-  const createTeam = () => {
+  // CREATE TEAM
+  const createTeam = async () => {
+
+    // VALIDATION
+    if (!teamName) {
+      alert("Enter Team Name")
+      return
+    }
+
+    if (!captain) {
+      alert("Select Captain")
+      return
+    }
+
+    const filteredPlayers =
+      players.filter(
+        player => player.trim() !== ""
+      )
+
+    if (filteredPlayers.length < 2) {
+      alert(
+        "Add at least 2 players"
+      )
+      return
+    }
 
     const team = {
       teamName,
-      players,
+      players: filteredPlayers,
       captain,
+      createdAt:
+        new Date().toISOString(),
     }
 
-    addTeam(team)
+    try {
 
-    alert("Team Created!")
+      // SAVE TO FIREBASE
+      await addDoc(
+        collection(db, "teams"),
+        team
+      )
+
+      // SAVE TO LOCAL STATE
+      addTeam(team)
+
+      alert("Team Saved Successfully!")
+
+      // RESET FORM
+      setTeamName("")
+
+      setPlayers([
+        "",
+        "",
+        "",
+        "",
+        "",
+      ])
+
+      setCaptain("")
+
+    } catch (error) {
+
+      console.log(error)
+
+      alert("Error Saving Team")
+    }
   }
 
   return (
@@ -47,6 +114,7 @@ export default function CreateTeam({
         Create Team
       </h2>
 
+      {/* TEAM NAME */}
       <input
         type="text"
         placeholder="Team Name"
@@ -57,6 +125,7 @@ export default function CreateTeam({
         className="w-full p-3 rounded-xl bg-black mb-4"
       />
 
+      {/* PLAYERS */}
       <div className="space-y-3">
 
         {
@@ -79,6 +148,7 @@ export default function CreateTeam({
 
       </div>
 
+      {/* CAPTAIN */}
       <select
         value={captain}
         onChange={(e) =>
@@ -97,16 +167,20 @@ export default function CreateTeam({
               key={index}
               value={player}
             >
-              {player || `Player ${index + 1}`}
+              {
+                player ||
+                `Player ${index + 1}`
+              }
             </option>
           ))
         }
 
       </select>
 
+      {/* BUTTON */}
       <button
         onClick={createTeam}
-        className="bg-green-600 px-6 py-3 rounded-xl mt-6 w-full"
+        className="bg-green-600 hover:bg-green-700 transition-all px-6 py-3 rounded-xl mt-6 w-full font-bold"
       >
         Create Team
       </button>

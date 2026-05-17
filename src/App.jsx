@@ -1,4 +1,12 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+
+import { db } from "./firebase"
+
+import {
+  collection,
+  getDocs,
+  addDoc,
+} from "firebase/firestore"
 
 import Navbar from "./components/Navbar"
 import ScoreBoard from "./components/ScoreBoard"
@@ -8,6 +16,7 @@ import FallOfWickets from "./components/FallOfWickets"
 import BattingScorecard from "./components/BattingScorecard"
 import BowlingScorecard from "./components/BowlingScorecard"
 import MatchSetup from "./components/MatchSetup"
+import MatchHistory from "./components/MatchHistory"
 
 import CreateTeam from "./pages/CreateTeam"
 
@@ -15,63 +24,246 @@ export default function App() {
 
   // SCORE STATES
   const [score, setScore] = useState(0)
+
   const [wickets, setWickets] = useState(0)
+
   const [balls, setBalls] = useState(0)
 
   // MATCH STATES
-  const [maxOvers, setMaxOvers] = useState(2)
+  const [maxOvers, setMaxOvers] =
+    useState(2)
 
-  const [innings, setInnings] = useState(1)
+  const [innings, setInnings] =
+    useState(1)
 
-  const [target, setTarget] = useState(null)
+  const [target, setTarget] =
+    useState(null)
 
-  const [winner, setWinner] = useState("")
+  const [winner, setWinner] =
+    useState("")
 
-  // FREE HIT
-  const [freeHit, setFreeHit] = useState(false)
-
-  // HISTORY
-  const [history, setHistory] = useState([])
-
-  // FALL OF WICKETS
-  const [fallOfWickets, setFallOfWickets] =
+  const [matches, setMatches] =
     useState([])
 
+  // FREE HIT
+  const [freeHit, setFreeHit] =
+    useState(false)
+
+  // HISTORY
+  const [history, setHistory] =
+    useState([])
+
+  // FALL OF WICKETS
+  const [
+    fallOfWickets,
+    setFallOfWickets,
+  ] = useState([])
+
   // TEAMS
-  const [teams, setTeams] = useState([])
+  const [teams, setTeams] =
+    useState([])
 
-  const [teamA, setTeamA] = useState(null)
+  const [teamA, setTeamA] =
+    useState(null)
 
-  const [teamB, setTeamB] = useState(null)
+  const [teamB, setTeamB] =
+    useState(null)
 
   // BATTERS
-  const [batters, setBatters] = useState([
-    {
-      name: "Batsman 1",
-      runs: 0,
-      balls: 0,
-    },
-    {
-      name: "Batsman 2",
-      runs: 0,
-      balls: 0,
-    },
-  ])
+  const [batters, setBatters] =
+    useState([
+      {
+        name: "Batsman 1",
+        runs: 0,
+        balls: 0,
+      },
+      {
+        name: "Batsman 2",
+        runs: 0,
+        balls: 0,
+      },
+    ])
 
-  const [currentStriker, setCurrentStriker] =
-    useState(0)
+  const [
+    currentStriker,
+    setCurrentStriker,
+  ] = useState(0)
 
   // BOWLER
-  const [bowler, setBowler] = useState({
-    name: "Bowler 1",
-    runs: 0,
-    wickets: 0,
-    balls: 0,
-  })
+  const [bowler, setBowler] =
+    useState({
+      name: "Bowler 1",
+      runs: 0,
+      wickets: 0,
+      balls: 0,
+    })
+
+  // LOAD TEAMS
+  const loadTeams = async () => {
+
+    try {
+
+      const querySnapshot =
+        await getDocs(
+          collection(db, "teams")
+        )
+
+      const loadedTeams = []
+
+      querySnapshot.forEach((doc) => {
+
+        loadedTeams.push({
+          id: doc.id,
+          ...doc.data(),
+        })
+
+      })
+
+      setTeams(loadedTeams)
+
+    } catch (error) {
+
+      console.log(error)
+
+      alert("Error Loading Teams")
+    }
+  }
+
+  // LOAD MATCHES
+  const loadMatches = async () => {
+
+    try {
+
+      const querySnapshot =
+        await getDocs(
+          collection(db, "matches")
+        )
+
+      const loadedMatches = []
+
+      querySnapshot.forEach((doc) => {
+
+        loadedMatches.push({
+          id: doc.id,
+          ...doc.data(),
+        })
+
+      })
+
+      setMatches(loadedMatches)
+
+    } catch (error) {
+
+      console.log(error)
+    }
+  }
+
+  // LOAD DATA ON START
+  useEffect(() => {
+
+    loadTeams()
+
+    loadMatches()
+
+  }, [])
 
   // CREATE TEAM
   const addTeam = (team) => {
-    setTeams(prev => [...prev, team])
+
+    setTeams(prev => [
+      ...prev,
+      team,
+    ])
+  }
+
+  // RESET MATCH
+  const resetMatch = () => {
+
+    setScore(0)
+
+    setWickets(0)
+
+    setBalls(0)
+
+    setFreeHit(false)
+
+    setHistory([])
+
+    setFallOfWickets([])
+
+    setBatters([
+      {
+        name: "Batsman 1",
+        runs: 0,
+        balls: 0,
+      },
+      {
+        name: "Batsman 2",
+        runs: 0,
+        balls: 0,
+      },
+    ])
+
+    setBowler({
+      name: "Bowler 1",
+      runs: 0,
+      wickets: 0,
+      balls: 0,
+    })
+
+    setCurrentStriker(0)
+  }
+
+  // SAVE MATCH
+  const saveMatch = async (
+    winnerName
+  ) => {
+
+    const matchData = {
+
+      teamA:
+        teamA?.teamName || "Team A",
+
+      teamB:
+        teamB?.teamName || "Team B",
+
+      winner: winnerName,
+
+      score: `${score}/${wickets}`,
+
+      overs,
+
+      target,
+
+      innings,
+
+      fallOfWickets,
+
+      history,
+
+      createdAt:
+        new Date().toISOString(),
+    }
+
+    try {
+
+      await addDoc(
+        collection(db, "matches"),
+        matchData
+      )
+
+      loadMatches()
+
+      console.log(
+        "Match Saved"
+      )
+
+    } catch (error) {
+
+      console.log(error)
+
+      alert("Error Saving Match")
+    }
   }
 
   // MATCH END LOGIC
@@ -81,7 +273,8 @@ export default function App() {
     updatedWickets
   ) => {
 
-    const totalBalls = maxOvers * 6
+    const totalBalls =
+      maxOvers * 6
 
     // FIRST INNINGS END
     if (
@@ -98,34 +291,7 @@ export default function App() {
         `Innings Over! Target is ${updatedScore + 1}`
       )
 
-      // RESET FOR SECOND INNINGS
-      setScore(0)
-      setWickets(0)
-      setBalls(0)
-
-      setHistory([])
-
-      setFallOfWickets([])
-
-      setBatters([
-        {
-          name: "Batsman 1",
-          runs: 0,
-          balls: 0,
-        },
-        {
-          name: "Batsman 2",
-          runs: 0,
-          balls: 0,
-        },
-      ])
-
-      setBowler({
-        name: "Bowler 1",
-        runs: 0,
-        wickets: 0,
-        balls: 0,
-      })
+      resetMatch()
 
       setInnings(2)
 
@@ -139,9 +305,12 @@ export default function App() {
       updatedScore >= target
     ) {
 
-      setWinner(
+      const result =
         `${teamB?.teamName || "Team B"} Won`
-      )
+
+      setWinner(result)
+
+      saveMatch(result)
 
       alert("Match Finished!")
 
@@ -157,9 +326,12 @@ export default function App() {
       )
     ) {
 
-      setWinner(
+      const result =
         `${teamA?.teamName || "Team A"} Won`
-      )
+
+      setWinner(result)
+
+      saveMatch(result)
 
       alert("Match Finished!")
     }
@@ -168,14 +340,20 @@ export default function App() {
   // ADD RUNS
   const addRuns = (runs) => {
 
-    const updatedScore = score + runs
-    const updatedBalls = balls + 1
+    const updatedScore =
+      score + runs
+
+    const updatedBalls =
+      balls + 1
 
     setScore(updatedScore)
 
     setBalls(updatedBalls)
 
-    setHistory(prev => [...prev, runs])
+    setHistory(prev => [
+      ...prev,
+      runs,
+    ])
 
     // BATTER UPDATE
     setBatters(prev => {
@@ -201,6 +379,7 @@ export default function App() {
       runs === 1 ||
       runs === 3
     ) {
+
       setCurrentStriker(prev =>
         prev === 0 ? 1 : 0
       )
@@ -208,6 +387,7 @@ export default function App() {
 
     // FREE HIT RESET
     if (freeHit) {
+
       setFreeHit(false)
     }
 
@@ -223,20 +403,27 @@ export default function App() {
 
     if (freeHit) {
 
-      alert("Cannot get out on Free Hit!")
+      alert(
+        "Cannot get out on Free Hit!"
+      )
 
       setBalls(prev => prev + 1)
 
-      setHistory(prev => [...prev, "FH"])
+      setHistory(prev => [
+        ...prev,
+        "FH",
+      ])
 
       setFreeHit(false)
 
       return
     }
 
-    const updatedBalls = balls + 1
+    const updatedBalls =
+      balls + 1
 
-    const newWicket = wickets + 1
+    const newWicket =
+      wickets + 1
 
     const wicketInfo =
       `${score}/${newWicket} (${Math.floor(balls / 6)}.${balls % 6})`
@@ -245,7 +432,10 @@ export default function App() {
 
     setBalls(updatedBalls)
 
-    setHistory(prev => [...prev, "W"])
+    setHistory(prev => [
+      ...prev,
+      "W",
+    ])
 
     // FALL OF WICKETS
     setFallOfWickets(prev => [
@@ -256,7 +446,8 @@ export default function App() {
     // BOWLER UPDATE
     setBowler(prev => ({
       ...prev,
-      wickets: prev.wickets + 1,
+      wickets:
+        prev.wickets + 1,
       balls: prev.balls + 1,
     }))
 
@@ -286,7 +477,10 @@ export default function App() {
 
     setScore(prev => prev + 1)
 
-    setHistory(prev => [...prev, "Wd"])
+    setHistory(prev => [
+      ...prev,
+      "Wd",
+    ])
 
     setBowler(prev => ({
       ...prev,
@@ -299,7 +493,10 @@ export default function App() {
 
     setScore(prev => prev + 1)
 
-    setHistory(prev => [...prev, "Nb"])
+    setHistory(prev => [
+      ...prev,
+      "Nb",
+    ])
 
     setBowler(prev => ({
       ...prev,
@@ -331,7 +528,9 @@ export default function App() {
             type="number"
             value={maxOvers}
             onChange={(e) =>
-              setMaxOvers(Number(e.target.value))
+              setMaxOvers(
+                Number(e.target.value)
+              )
             }
             className="bg-zinc-800 p-3 rounded-xl w-full"
           />
@@ -344,7 +543,11 @@ export default function App() {
           wickets={wickets}
           overs={overs}
           freeHit={freeHit}
-          teamA={innings === 1 ? teamA : teamB}
+          teamA={
+            innings === 1
+              ? teamA
+              : teamB
+          }
           innings={innings}
           target={target}
           winner={winner}
@@ -353,7 +556,9 @@ export default function App() {
         {/* BATTING */}
         <BattingScorecard
           batters={batters}
-          currentStriker={currentStriker}
+          currentStriker={
+            currentStriker
+          }
         />
 
         {/* BOWLING */}
@@ -369,14 +574,16 @@ export default function App() {
           addNoBall={addNoBall}
         />
 
-        {/* HISTORY */}
+        {/* BALL HISTORY */}
         <BallHistory
           history={history}
         />
 
-        {/* FOW */}
+        {/* FALL OF WICKETS */}
         <FallOfWickets
-          fallOfWickets={fallOfWickets}
+          fallOfWickets={
+            fallOfWickets
+          }
         />
 
         {/* CREATE TEAM */}
@@ -389,6 +596,11 @@ export default function App() {
           teams={teams}
           setTeamA={setTeamA}
           setTeamB={setTeamB}
+        />
+
+        {/* MATCH HISTORY */}
+        <MatchHistory
+          matches={matches}
         />
 
       </div>
