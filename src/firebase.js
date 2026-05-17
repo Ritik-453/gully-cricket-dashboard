@@ -5,15 +5,28 @@ import {
 } from "firebase/firestore"
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCOdEsmOW2bpTLAvfxEIQjnzDo4wzxzkjs",
-  authDomain: "gully-cricket-dashboard.firebaseapp.com",
-  projectId: "gully-cricket-dashboard",
-  storageBucket: "gully-cricket-dashboard.firebasestorage.app",
-  messagingSenderId: "721400424382",
-  appId: "1:721400424382:web:1b78a3396d77889ca0bbef",
-  measurementId: "G-34NDLM2NE3"
+
+  apiKey:
+    import.meta.env.VITE_FIREBASE_API_KEY,
+
+  authDomain:
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+
+  projectId:
+    import.meta.env.VITE_FIREBASE_PROJECT_ID,
+
+  storageBucket:
+    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+
+  messagingSenderId:
+    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+
+  appId:
+    import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
-const app = initializeApp(firebaseConfig)
+const app =
+  initializeApp(firebaseConfig)
 
-export const db = getFirestore(app)
+export const db =
+  getFirestore(app)
