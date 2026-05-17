@@ -10,21 +10,33 @@ export default function ScoreBoard({
 }) {
 
   return (
-    <div className="bg-zinc-800 p-6 rounded-2xl shadow-xl mt-6">
+    <div
+      className="
+        bg-zinc-800
+        p-4
+        md:p-6
+        rounded-2xl
+        shadow-xl
+        mt-4
+        sticky
+        top-2
+        z-40
+      "
+    >
 
-      <h2 className="text-3xl font-bold">
+      <h2 className="text-2xl md:text-3xl font-bold">
         {teamA?.teamName || "Select Team"}
       </h2>
 
-      <div className="mt-4 text-5xl font-extrabold">
+      <div className="mt-4 text-4xl md:text-6xl font-extrabold">
         {score}/{wickets}
       </div>
 
-      <div className="mt-2 text-lg text-gray-300">
+      <div className="mt-3 text-lg text-gray-300">
         Overs: {overs}
       </div>
 
-      <div className="mt-3 text-lg">
+      <div className="mt-2 text-lg">
         Innings: {innings}
       </div>
 

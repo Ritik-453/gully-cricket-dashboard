@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react"
 
+import {
+  Routes,
+  Route,
+} from "react-router-dom"
+
 import { db } from "./firebase"
 
 import {
@@ -9,25 +14,22 @@ import {
 } from "firebase/firestore"
 
 import Navbar from "./components/Navbar"
-import ScoreBoard from "./components/ScoreBoard"
-import MatchControls from "./components/MatchControls"
-import BallHistory from "./components/BallHistory"
-import FallOfWickets from "./components/FallOfWickets"
-import BattingScorecard from "./components/BattingScorecard"
-import BowlingScorecard from "./components/BowlingScorecard"
-import MatchSetup from "./components/MatchSetup"
-import MatchHistory from "./components/MatchHistory"
 
-import CreateTeam from "./pages/CreateTeam"
+import Home from "./pages/Home"
+import Teams from "./pages/Teams"
+import History from "./pages/History"
+import LiveMatch from "./pages/LiveMatch"
 
 export default function App() {
 
   // SCORE STATES
   const [score, setScore] = useState(0)
 
-  const [wickets, setWickets] = useState(0)
+  const [wickets, setWickets] =
+    useState(0)
 
-  const [balls, setBalls] = useState(0)
+  const [balls, setBalls] =
+    useState(0)
 
   // MATCH STATES
   const [maxOvers, setMaxOvers] =
@@ -124,8 +126,6 @@ export default function App() {
     } catch (error) {
 
       console.log(error)
-
-      alert("Error Loading Teams")
     }
   }
 
@@ -158,7 +158,6 @@ export default function App() {
     }
   }
 
-  // LOAD DATA ON START
   useEffect(() => {
 
     loadTeams()
@@ -219,6 +218,9 @@ export default function App() {
     winnerName
   ) => {
 
+    const overs =
+      `${Math.floor(balls / 6)}.${balls % 6}`
+
     const matchData = {
 
       teamA:
@@ -254,15 +256,9 @@ export default function App() {
 
       loadMatches()
 
-      console.log(
-        "Match Saved"
-      )
-
     } catch (error) {
 
       console.log(error)
-
-      alert("Error Saving Match")
     }
   }
 
@@ -515,93 +511,72 @@ export default function App() {
 
       <Navbar />
 
-      <div className="p-6 max-w-4xl mx-auto">
+      <div
+        className="
+          p-3
+          md:p-6
+          max-w-4xl
+          mx-auto
+        "
+      >
 
-        {/* OVERS INPUT */}
-        <div className="mb-6">
+        <Routes>
 
-          <label className="block mb-2">
-            Total Overs
-          </label>
-
-          <input
-            type="number"
-            value={maxOvers}
-            onChange={(e) =>
-              setMaxOvers(
-                Number(e.target.value)
-              )
-            }
-            className="bg-zinc-800 p-3 rounded-xl w-full"
+          <Route
+            path="/"
+            element={<Home />}
           />
 
-        </div>
+          <Route
+            path="/teams"
+            element={
+              <Teams
+                addTeam={addTeam}
+              />
+            }
+          />
 
-        {/* SCOREBOARD */}
-        <ScoreBoard
-          score={score}
-          wickets={wickets}
-          overs={overs}
-          freeHit={freeHit}
-          teamA={
-            innings === 1
-              ? teamA
-              : teamB
-          }
-          innings={innings}
-          target={target}
-          winner={winner}
-        />
+          <Route
+            path="/history"
+            element={
+              <History
+                matches={matches}
+              />
+            }
+          />
 
-        {/* BATTING */}
-        <BattingScorecard
-          batters={batters}
-          currentStriker={
-            currentStriker
-          }
-        />
+          <Route
+            path="/live"
+            element={
+              <LiveMatch
+                maxOvers={maxOvers}
+                setMaxOvers={setMaxOvers}
+                score={score}
+                wickets={wickets}
+                overs={overs}
+                freeHit={freeHit}
+                innings={innings}
+                target={target}
+                winner={winner}
+                teamA={teamA}
+                teamB={teamB}
+                batters={batters}
+                currentStriker={currentStriker}
+                bowler={bowler}
+                history={history}
+                fallOfWickets={fallOfWickets}
+                teams={teams}
+                setTeamA={setTeamA}
+                setTeamB={setTeamB}
+                addRuns={addRuns}
+                addWicket={addWicket}
+                addWide={addWide}
+                addNoBall={addNoBall}
+              />
+            }
+          />
 
-        {/* BOWLING */}
-        <BowlingScorecard
-          bowler={bowler}
-        />
-
-        {/* CONTROLS */}
-        <MatchControls
-          addRuns={addRuns}
-          addWicket={addWicket}
-          addWide={addWide}
-          addNoBall={addNoBall}
-        />
-
-        {/* BALL HISTORY */}
-        <BallHistory
-          history={history}
-        />
-
-        {/* FALL OF WICKETS */}
-        <FallOfWickets
-          fallOfWickets={
-            fallOfWickets
-          }
-        />
-
-        {/* CREATE TEAM */}
-        <CreateTeam
-          addTeam={addTeam}
-        />
-
-        {/* MATCH SETUP */}
-        <MatchSetup
-          teams={teams}
-          setTeamA={setTeamA}
-          setTeamB={setTeamB}
-        />
-
-        {/* MATCH HISTORY */}
-        <MatchHistory
-          matches={matches}
-        />
+        </Routes>
 
       </div>
 
