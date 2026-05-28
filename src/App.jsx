@@ -14,6 +14,8 @@ import {
 } from "firebase/firestore"
 
 import Navbar from "./components/Navbar"
+import Toast from "./components/Toast"
+import ExtrasCard from "./components/ExtrasCard"
 
 import Home from "./pages/Home"
 import Teams from "./pages/Teams"
@@ -43,6 +45,21 @@ export default function App() {
 
   const [winner, setWinner] =
     useState("")
+  
+  // TOAST
+  const [toast, setToast] =
+    useState("")
+
+  // NO BALL FLOW
+  const [pendingNoBall, setPendingNoBall] =
+    useState(false)
+
+  // EXTRAS
+  const [extras, setExtras] =
+    useState({
+      wides: 0,
+      noBalls: 0,
+    })
 
   const [matches, setMatches] =
     useState([])
@@ -78,11 +95,15 @@ export default function App() {
         name: "Batsman 1",
         runs: 0,
         balls: 0,
+        fours: 0,
+        sixes: 0,
       },
       {
         name: "Batsman 2",
         runs: 0,
         balls: 0,
+        fours: 0,
+        sixes: 0,
       },
     ])
 
@@ -283,8 +304,8 @@ export default function App() {
 
       setTarget(updatedScore + 1)
 
-      alert(
-        `Innings Over! Target is ${updatedScore + 1}`
+      showToast(
+        `🎯 Target: ${updatedScore + 1}`
       )
 
       resetMatch()
@@ -308,7 +329,7 @@ export default function App() {
 
       saveMatch(result)
 
-      alert("Match Finished!")
+      showToast("🏆 Match Finished")
 
       return
     }
@@ -329,18 +350,34 @@ export default function App() {
 
       saveMatch(result)
 
-      alert("Match Finished!")
+      showToast("🏆 Match Finished")
     }
   }
 
   // ADD RUNS
   const addRuns = (runs) => {
 
+    if (winner) return
+
+    let totalRuns = runs
+
+    // NO BALL FLOW
+    if (pendingNoBall) {
+
+      totalRuns += 1
+
+      setPendingNoBall(false)
+
+      setFreeHit(true)
+    }
+
     const updatedScore =
-      score + runs
+      score + totalRuns
 
     const updatedBalls =
-      balls + 1
+      pendingNoBall
+        ? balls
+        : balls + 1
 
     setScore(updatedScore)
 
@@ -348,25 +385,47 @@ export default function App() {
 
     setHistory(prev => [
       ...prev,
-      runs,
+      totalRuns,
     ])
 
     // BATTER UPDATE
     setBatters(prev => {
 
-      const updated = [...prev]
+      return prev.map((batter, index) => {
 
-      updated[currentStriker].runs += runs
+        if (index !== currentStriker) {
+          return batter
+        }
 
-      updated[currentStriker].balls += 1
+        return {
 
-      return updated
+          ...batter,
+
+          runs: batter.runs + runs,
+
+          balls:
+            pendingNoBall
+              ? batter.balls
+              : batter.balls + 1,
+
+          fours:
+            runs === 4
+              ? batter.fours + 1
+              : batter.fours,
+
+          sixes:
+            runs === 6
+              ? batter.sixes + 1
+              : batter.sixes,
+
+        }
+      })
     })
 
     // BOWLER UPDATE
     setBowler(prev => ({
       ...prev,
-      runs: prev.runs + runs,
+      runs: prev.runs + totalRuns,
       balls: prev.balls + 1,
     }))
 
@@ -381,9 +440,16 @@ export default function App() {
       )
     }
 
+    // OVER END ROTATION
+    if (updatedBalls % 6 === 0) {
+
+      setCurrentStriker(prev =>
+        prev === 0 ? 1 : 0
+      )
+    }
+
     // FREE HIT RESET
     if (freeHit) {
-
       setFreeHit(false)
     }
 
@@ -397,18 +463,13 @@ export default function App() {
   // WICKET
   const addWicket = () => {
 
+    if (winner) return
+
     if (freeHit) {
 
-      alert(
-        "Cannot get out on Free Hit!"
+      showToast(
+        "🏏 Cannot Out On Free Hit"
       )
-
-      setBalls(prev => prev + 1)
-
-      setHistory(prev => [
-        ...prev,
-        "FH",
-      ])
 
       setFreeHit(false)
 
@@ -421,8 +482,16 @@ export default function App() {
     const newWicket =
       wickets + 1
 
-    const wicketInfo =
-      `${score}/${newWicket} (${Math.floor(balls / 6)}.${balls % 6})`
+    // FIXED FOW BUG
+    const wicketInfo = {
+      wicket: newWicket,
+      score: score,
+      batter:
+        batters[currentStriker].name,
+      over:
+        `${Math.floor(updatedBalls / 6)}.${updatedBalls % 6}`,
+
+    }
 
     setWickets(newWicket)
 
@@ -433,7 +502,6 @@ export default function App() {
       "W",
     ])
 
-    // FALL OF WICKETS
     setFallOfWickets(prev => [
       ...prev,
       wicketInfo,
@@ -456,6 +524,8 @@ export default function App() {
         name: `Batsman ${newWicket + 2}`,
         runs: 0,
         balls: 0,
+        fours: 0,
+        sixes: 0,
       }
 
       return updated
@@ -471,12 +541,19 @@ export default function App() {
   // WIDE
   const addWide = () => {
 
+    if (winner) return
+
     setScore(prev => prev + 1)
 
     setHistory(prev => [
       ...prev,
       "Wd",
     ])
+
+    setExtras(prev => ({
+      ...prev,
+      wides: prev.wides + 1,
+    }))
 
     setBowler(prev => ({
       ...prev,
@@ -487,27 +564,45 @@ export default function App() {
   // NO BALL
   const addNoBall = () => {
 
-    setScore(prev => prev + 1)
+    if (winner) return
 
-    setHistory(prev => [
-      ...prev,
-      "Nb",
-    ])
+    setPendingNoBall(true)
 
-    setBowler(prev => ({
+    setExtras(prev => ({
       ...prev,
-      runs: prev.runs + 1,
+      noBalls:
+        prev.noBalls + 1,
     }))
 
-    setFreeHit(true)
+    showToast(
+      "🏏 NO BALL"
+    )
   }
 
   // OVERS
   const overs =
     `${Math.floor(balls / 6)}.${balls % 6}`
 
+  const showToast = (msg) => {
+
+    setToast(msg)
+
+    setTimeout(() => {
+      setToast("")
+    }, 2500)
+  }
+
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="
+        min-h-screen
+        bg-gradient-to-br
+        from-black
+        via-zinc-900
+        to-zinc-950
+        text-white
+      ">
+      
+      <Toast message={toast} />
 
       <Navbar />
 
@@ -572,6 +667,9 @@ export default function App() {
                 addWicket={addWicket}
                 addWide={addWide}
                 addNoBall={addNoBall}
+                extras={extras}
+                balls={balls}
+                maxOvers={maxOvers}
               />
             }
           />

@@ -4,68 +4,130 @@ export default function BattingScorecard({
 }) {
 
   return (
-    <div className="bg-zinc-800 p-4 rounded-2xl mt-6">
+    <div className="
+      bg-zinc-800
+      p-4
+      rounded-2xl
+      mt-6
+    ">
 
-      <h2 className="text-2xl font-bold mb-4">
+      <h2 className="
+        text-2xl
+        font-bold
+        mb-4
+      ">
         Batting Scorecard
       </h2>
 
-      <table className="w-full">
+      <div className="overflow-x-auto">
 
-        <thead>
-          <tr className="text-left border-b border-zinc-600">
-            <th className="pb-2">Batter</th>
-            <th>R</th>
-            <th>B</th>
-            <th>SR</th>
-          </tr>
-        </thead>
+        <table className="w-full">
 
-        <tbody>
+          <thead>
 
-          {
-            batters.map((batter, index) => {
+            <tr className="
+              border-b
+              border-zinc-600
+              text-left
+            ">
 
-              const strikeRate =
-                batter.balls > 0
-                  ? (
-                      (batter.runs /
-                        batter.balls) *
-                      100
-                    ).toFixed(1)
-                  : 0
+              <th className="pb-3">
+                Batter
+              </th>
 
-              return (
-                <tr
-                  key={index}
-                  className="border-b border-zinc-700"
-                >
+              <th>R</th>
 
-                  <td className="py-3">
+              <th>B</th>
 
-                    {batter.name}
+              <th>4s</th>
 
-                    {
-                      currentStriker === index &&
-                      " *"
-                    }
+              <th>6s</th>
 
-                  </td>
+              <th>SR</th>
 
-                  <td>{batter.runs}</td>
+            </tr>
 
-                  <td>{batter.balls}</td>
+          </thead>
 
-                  <td>{strikeRate}</td>
+          <tbody>
 
-                </tr>
-              )
-            })
-          }
+            {
+              batters.map((
+                batter,
+                index
+              ) => {
 
-        </tbody>
+                const strikeRate =
+                  batter.balls > 0
+                    ? (
+                        (
+                          batter.runs /
+                          batter.balls
+                        ) * 100
+                      ).toFixed(1)
+                    : "0.0"
 
-      </table>
+                return (
+
+                  <tr
+                    key={index}
+                    className="
+                      border-b
+                      border-zinc-700
+                    "
+                  >
+
+                    <td className="
+                      py-4
+                      font-semibold
+                    ">
+
+                      {batter.name}
+
+                      {
+                        currentStriker === index &&
+                        (
+                          <span className="
+                            text-green-400
+                            ml-2
+                          ">
+                            *
+                          </span>
+                        )
+                      }
+
+                    </td>
+
+                    <td>
+                      {batter.runs}
+                    </td>
+
+                    <td>
+                      {batter.balls}
+                    </td>
+
+                    <td>
+                      {batter.fours || 0}
+                    </td>
+
+                    <td>
+                      {batter.sixes || 0}
+                    </td>
+
+                    <td>
+                      {strikeRate}
+                    </td>
+
+                  </tr>
+                )
+              })
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
 
     </div>
   )

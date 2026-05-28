@@ -39,6 +39,44 @@ export default function CreateTeam({
     setPlayers(updatedPlayers)
   }
 
+  // ADD PLAYER
+  const addPlayerField = () => {
+
+    if (players.length >= 15) {
+      return
+    }
+
+    setPlayers(prev => [
+      ...prev,
+      "",
+    ])
+  }
+
+  // REMOVE PLAYER
+  const removePlayerField = (
+    index
+  ) => {
+
+    // MINIMUM 2 PLAYERS
+    if (players.length <= 2) {
+      return
+    }
+
+    const updatedPlayers =
+      players.filter(
+        (_, i) => i !== index
+      )
+
+    setPlayers(updatedPlayers)
+
+    // RESET CAPTAIN IF REMOVED
+    if (
+      captain === players[index]
+    ) {
+      setCaptain("")
+    }
+  }
+
   // CREATE TEAM
   const createTeam = async () => {
 
@@ -55,20 +93,29 @@ export default function CreateTeam({
 
     const filteredPlayers =
       players.filter(
-        player => player.trim() !== ""
+        player =>
+          player.trim() !== ""
       )
 
-    if (filteredPlayers.length < 2) {
+    if (
+      filteredPlayers.length < 2
+    ) {
+
       alert(
         "Add at least 2 players"
       )
+
       return
     }
 
     const team = {
+
       teamName,
+
       players: filteredPlayers,
+
       captain,
+
       createdAt:
         new Date().toISOString(),
     }
@@ -84,7 +131,9 @@ export default function CreateTeam({
       // SAVE TO LOCAL STATE
       addTeam(team)
 
-      alert("Team Saved Successfully!")
+      alert(
+        "Team Saved Successfully!"
+      )
 
       // RESET FORM
       setTeamName("")
@@ -103,14 +152,25 @@ export default function CreateTeam({
 
       console.log(error)
 
-      alert("Error Saving Team")
+      alert(
+        "Error Saving Team"
+      )
     }
   }
 
   return (
-    <div className="bg-zinc-900 p-6 rounded-2xl mt-6">
+    <div className="
+      bg-zinc-900
+      p-6
+      rounded-2xl
+      mt-6
+    ">
 
-      <h2 className="text-2xl font-bold mb-6">
+      <h2 className="
+        text-2xl
+        font-bold
+        mb-6
+      ">
         Create Team
       </h2>
 
@@ -120,41 +180,108 @@ export default function CreateTeam({
         placeholder="Team Name"
         value={teamName}
         onChange={(e) =>
-          setTeamName(e.target.value)
+          setTeamName(
+            e.target.value
+          )
         }
-        className="w-full p-3 rounded-xl bg-black mb-4"
+        className="
+          w-full
+          p-3
+          rounded-xl
+          bg-black
+          mb-4
+        "
       />
 
       {/* PLAYERS */}
       <div className="space-y-3">
 
         {
-          players.map((player, index) => (
-            <input
+          players.map((
+            player,
+            index
+          ) => (
+
+            <div
               key={index}
-              type="text"
-              placeholder={`Player ${index + 1}`}
-              value={player}
-              onChange={(e) =>
-                handlePlayerChange(
-                  index,
-                  e.target.value
-                )
-              }
-              className="w-full p-3 rounded-xl bg-black"
-            />
+              className="
+                flex
+                gap-2
+              "
+            >
+
+              <input
+                type="text"
+                placeholder={`Player ${index + 1}`}
+                value={player}
+                onChange={(e) =>
+                  handlePlayerChange(
+                    index,
+                    e.target.value
+                  )
+                }
+                className="
+                  flex-1
+                  p-3
+                  rounded-xl
+                  bg-black
+                "
+              />
+
+              <button
+                onClick={() =>
+                  removePlayerField(
+                    index
+                  )
+                }
+                className="
+                  bg-red-600
+                  px-4
+                  rounded-xl
+                  font-bold
+                "
+              >
+                X
+              </button>
+
+            </div>
           ))
         }
 
       </div>
 
+      {/* ADD PLAYER BUTTON */}
+      <button
+        onClick={addPlayerField}
+        className="
+          bg-blue-600
+          hover:bg-blue-700
+          transition-all
+          px-5
+          py-3
+          rounded-xl
+          mt-4
+          font-bold
+        "
+      >
+        + Add Player
+      </button>
+
       {/* CAPTAIN */}
       <select
         value={captain}
         onChange={(e) =>
-          setCaptain(e.target.value)
+          setCaptain(
+            e.target.value
+          )
         }
-        className="w-full p-3 rounded-xl bg-black mt-4"
+        className="
+          w-full
+          p-3
+          rounded-xl
+          bg-black
+          mt-4
+        "
       >
 
         <option value="">
@@ -162,25 +289,41 @@ export default function CreateTeam({
         </option>
 
         {
-          players.map((player, index) => (
+          players.map((
+            player,
+            index
+          ) => (
+
             <option
               key={index}
               value={player}
             >
+
               {
                 player ||
                 `Player ${index + 1}`
               }
+
             </option>
           ))
         }
 
       </select>
 
-      {/* BUTTON */}
+      {/* CREATE BUTTON */}
       <button
         onClick={createTeam}
-        className="bg-green-600 hover:bg-green-700 transition-all px-6 py-3 rounded-xl mt-6 w-full font-bold"
+        className="
+          bg-green-600
+          hover:bg-green-700
+          transition-all
+          px-6
+          py-3
+          rounded-xl
+          mt-6
+          w-full
+          font-bold
+        "
       >
         Create Team
       </button>

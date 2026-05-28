@@ -2,59 +2,100 @@ export default function BowlingScorecard({
   bowler,
 }) {
 
+  // OVERS FORMAT
   const overs =
     `${Math.floor(bowler.balls / 6)}.${bowler.balls % 6}`
 
+  // ECONOMY
   const economy =
     bowler.balls > 0
       ? (
           bowler.runs /
           (bowler.balls / 6)
         ).toFixed(2)
-      : 0
+      : "0.00"
 
   return (
-    <div className="bg-zinc-800 p-4 rounded-2xl mt-6">
+    <div className="
+      bg-zinc-800
+      p-4
+      rounded-2xl
+      mt-6
+    ">
 
-      <h2 className="text-2xl font-bold mb-4">
-        Bowling Figures
+      <h2 className="
+        text-2xl
+        font-bold
+        mb-4
+      ">
+        Bowling Scorecard
       </h2>
 
-      <table className="w-full">
+      <div className="overflow-x-auto">
 
-        <thead>
-          <tr className="text-left border-b border-zinc-600">
+        <table className="w-full">
 
-            <th className="pb-2">Bowler</th>
-            <th>O</th>
-            <th>R</th>
-            <th>W</th>
-            <th>ECO</th>
+          <thead>
 
-          </tr>
-        </thead>
+            <tr className="
+              border-b
+              border-zinc-600
+              text-left
+            ">
 
-        <tbody>
+              <th className="pb-3">
+                Bowler
+              </th>
 
-          <tr>
+              <th>O</th>
 
-            <td className="py-3">
-              {bowler.name}
-            </td>
+              <th>R</th>
 
-            <td>{overs}</td>
+              <th>W</th>
 
-            <td>{bowler.runs}</td>
+              <th>ECO</th>
 
-            <td>{bowler.wickets}</td>
+            </tr>
 
-            <td>{economy}</td>
+          </thead>
 
-          </tr>
+          <tbody>
 
-        </tbody>
+            <tr className="
+              border-b
+              border-zinc-700
+            ">
 
-      </table>
+              <td className="
+                py-4
+                font-semibold
+              ">
+                {bowler.name}
+              </td>
+
+              <td>
+                {overs}
+              </td>
+
+              <td>
+                {bowler.runs}
+              </td>
+
+              <td>
+                {bowler.wickets}
+              </td>
+
+              <td>
+                {economy}
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
 
     </div>
   )
