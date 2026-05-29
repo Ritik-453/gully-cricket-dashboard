@@ -1,102 +1,114 @@
+const formatOvers = (balls) =>
+  `${Math.floor(balls / 6)}.${balls % 6}`
+
 export default function BowlingScorecard({
-  bowler,
+  bowlers,
+  currentBowlerName,
 }) {
-
-  // OVERS FORMAT
-  const overs =
-    `${Math.floor(bowler.balls / 6)}.${bowler.balls % 6}`
-
-  // ECONOMY
-  const economy =
-    bowler.balls > 0
-      ? (
-          bowler.runs /
-          (bowler.balls / 6)
-        ).toFixed(2)
-      : "0.00"
-
   return (
-    <div className="
-      bg-zinc-800
-      p-4
-      rounded-2xl
-      mt-6
-    ">
-
-      <h2 className="
-        text-2xl
-        font-bold
-        mb-4
-      ">
+    <div
+      className="
+        bg-zinc-800
+        p-4
+        rounded-2xl
+        mt-6
+      "
+    >
+      <h2
+        className="
+          text-2xl
+          font-bold
+          mb-4
+        "
+      >
         Bowling Scorecard
       </h2>
 
-      <div className="overflow-x-auto">
+      {bowlers.length === 0 ? (
+        <p className="text-zinc-400">
+          Choose the starting bowler to begin the innings.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr
+                className="
+                  border-b
+                  border-zinc-600
+                  text-left
+                "
+              >
+                <th className="pb-3">
+                  Bowler
+                </th>
 
-        <table className="w-full">
+                <th>O</th>
+                <th>R</th>
+                <th>W</th>
+                <th>ECO</th>
+              </tr>
+            </thead>
 
-          <thead>
+            <tbody>
+              {bowlers.map((bowler) => {
+                const economy =
+                  bowler.balls > 0
+                    ? (
+                        bowler.runs /
+                        (bowler.balls / 6)
+                      ).toFixed(2)
+                    : "0.00"
 
-            <tr className="
-              border-b
-              border-zinc-600
-              text-left
-            ">
+                const isCurrentBowler =
+                  bowler.name ===
+                  currentBowlerName
 
-              <th className="pb-3">
-                Bowler
-              </th>
+                return (
+                  <tr
+                    key={bowler.name}
+                    className="
+                      border-b
+                      border-zinc-700
+                    "
+                  >
+                    <td
+                      className="
+                        py-4
+                        font-semibold
+                      "
+                    >
+                      {bowler.name}
 
-              <th>O</th>
+                      {isCurrentBowler && (
+                        <span
+                          className="
+                            ml-2
+                            text-sm
+                            text-yellow-400
+                          "
+                        >
+                          live
+                        </span>
+                      )}
+                    </td>
 
-              <th>R</th>
+                    <td>
+                      {formatOvers(
+                        bowler.balls
+                      )}
+                    </td>
 
-              <th>W</th>
-
-              <th>ECO</th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            <tr className="
-              border-b
-              border-zinc-700
-            ">
-
-              <td className="
-                py-4
-                font-semibold
-              ">
-                {bowler.name}
-              </td>
-
-              <td>
-                {overs}
-              </td>
-
-              <td>
-                {bowler.runs}
-              </td>
-
-              <td>
-                {bowler.wickets}
-              </td>
-
-              <td>
-                {economy}
-              </td>
-
-            </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
-
+                    <td>{bowler.runs}</td>
+                    <td>{bowler.wickets}</td>
+                    <td>{economy}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

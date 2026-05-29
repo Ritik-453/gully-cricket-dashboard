@@ -1,21 +1,39 @@
 export default function MatchControls({
-  addRuns,
-  addWicket,
-  addWide,
   addNoBall,
+  addRuns,
+  addWide,
+  addWicket,
+  disabled,
+  pendingNoBall,
+  statusText,
 }) {
-
   const buttonStyle = `
     p-5
     rounded-2xl
     font-bold
     text-xl
-    active:scale-95
     transition-all
+    disabled:opacity-40
+    disabled:cursor-not-allowed
   `
 
   return (
-    <div className="mt-6">
+    <div className="mt-6 space-y-4">
+      {statusText && (
+        <div
+          className="
+            rounded-2xl
+            border
+            border-zinc-800
+            bg-zinc-900
+            p-4
+            text-sm
+            text-zinc-300
+          "
+        >
+          {statusText}
+        </div>
+      )}
 
       <div
         className="
@@ -25,37 +43,22 @@ export default function MatchControls({
           gap-4
         "
       >
-
-        <button
-          onClick={() => addRuns(0)}
-          className={`${buttonStyle} bg-zinc-700`}
-        >
-          0
-        </button>
-
-        <button
-          onClick={() => addRuns(1)}
-          className={`${buttonStyle} bg-zinc-700`}
-        >
-          1
-        </button>
-
-        <button
-          onClick={() => addRuns(2)}
-          className={`${buttonStyle} bg-zinc-700`}
-        >
-          2
-        </button>
-
-        <button
-          onClick={() => addRuns(3)}
-          className={`${buttonStyle} bg-zinc-700`}
-        >
-          3
-        </button>
+        {[0, 1, 2, 3].map((runs) => (
+          <button
+            key={runs}
+            onClick={() =>
+              addRuns(runs)
+            }
+            disabled={disabled}
+            className={`${buttonStyle} bg-zinc-700`}
+          >
+            {runs}
+          </button>
+        ))}
 
         <button
           onClick={() => addRuns(4)}
+          disabled={disabled}
           className={`${buttonStyle} bg-blue-600`}
         >
           4
@@ -63,6 +66,7 @@ export default function MatchControls({
 
         <button
           onClick={() => addRuns(6)}
+          disabled={disabled}
           className={`${buttonStyle} bg-green-600`}
         >
           6
@@ -70,13 +74,19 @@ export default function MatchControls({
 
         <button
           onClick={addWide}
-          className={`${buttonStyle} bg-yellow-500`}
+          disabled={
+            disabled || pendingNoBall
+          }
+          className={`${buttonStyle} bg-yellow-500 text-black`}
         >
           Wide
         </button>
 
         <button
           onClick={addNoBall}
+          disabled={
+            disabled || pendingNoBall
+          }
           className={`${buttonStyle} bg-purple-600`}
         >
           No Ball
@@ -84,13 +94,14 @@ export default function MatchControls({
 
         <button
           onClick={addWicket}
+          disabled={
+            disabled || pendingNoBall
+          }
           className={`${buttonStyle} bg-red-600 col-span-2 md:col-span-4`}
         >
           WICKET
         </button>
-
       </div>
-
     </div>
   )
 }

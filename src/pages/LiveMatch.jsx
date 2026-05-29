@@ -1,47 +1,43 @@
 import ScoreBoard from "../components/ScoreBoard"
-
 import BattingScorecard from "../components/BattingScorecard"
-
 import BowlingScorecard from "../components/BowlingScorecard"
-
 import MatchControls from "../components/MatchControls"
-
 import BallHistory from "../components/BallHistory"
-
 import FallOfWickets from "../components/FallOfWickets"
-
 import MatchSetup from "../components/MatchSetup"
-
 import ExtrasCard from "../components/ExtrasCard"
 
 export default function LiveMatch(props) {
-
   return (
-    <div className="
-      p-3
-      md:p-6
-      max-w-7xl
-      mx-auto
-    ">
-
-      {/* OVERS INPUT */}
+    <div
+      className="
+        p-3
+        md:p-6
+        max-w-7xl
+        mx-auto
+      "
+    >
       <div className="mb-6">
-
-        <label className="
-          block
-          mb-2
-          text-zinc-300
-        ">
+        <label
+          className="
+            block
+            mb-2
+            text-zinc-300
+          "
+        >
           Total Overs
         </label>
 
         <input
           type="number"
-          disabled={props.balls > 0 || props.innings > 1}
+          min="1"
+          disabled={props.matchLocked}
           value={props.maxOvers}
-          onChange={(e) =>
+          onChange={(event) =>
             props.setMaxOvers(
-              Number(e.target.value)
+              Number(
+                event.target.value
+              ) || 1
             )
           }
           className="
@@ -53,86 +49,82 @@ export default function LiveMatch(props) {
             disabled:cursor-not-allowed
           "
         />
-
       </div>
 
-      {/* TOP DASHBOARD */}
-      <div className="
-        grid
-        grid-cols-1
-        lg:grid-cols-2
-        gap-6
-      ">
-
-        {/* LEFT SIDE */}
+      <div
+        className="
+          grid
+          grid-cols-1
+          lg:grid-cols-2
+          gap-6
+        "
+      >
         <div className="space-y-6">
-
           <ScoreBoard
-            score={props.score}
-            wickets={props.wickets}
-            overs={props.overs}
-            freeHit={props.freeHit}
-            teamA={
-              props.innings === 1
-                ? props.teamA
-                : props.teamB
-            }
-            innings={props.innings}
-            target={props.target}
-            winner={props.winner}
             balls={props.balls}
+            freeHit={props.freeHit}
+            innings={props.innings}
             maxOvers={props.maxOvers}
+            overs={props.overs}
+            score={props.score}
+            target={props.target}
+            teamA={props.battingTeam}
+            wickets={props.wickets}
+            winner={props.winner}
           />
 
-          {
-            props.extras && (
-              <ExtrasCard
-                extras={props.extras}
-              />
-            )
-          }
-
+          <ExtrasCard
+            extras={props.extras}
+          />
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="space-y-6">
-
           <BattingScorecard
+            activeBatters={
+              props.activeBatters
+            }
             batters={props.batters}
-            currentStriker={
-              props.currentStriker
+            strikerName={
+              props.strikerName
             }
           />
 
           <BowlingScorecard
-            bowler={props.bowler}
+            bowlers={props.bowlers}
+            currentBowlerName={
+              props.currentBowlerName
+            }
           />
-
         </div>
-
       </div>
 
-      {/* MATCH CONTROLS */}
       <div className="mt-8">
-
         <MatchControls
-          addRuns={props.addRuns}
-          addWicket={props.addWicket}
-          addWide={props.addWide}
           addNoBall={props.addNoBall}
+          addRuns={props.addRuns}
+          addWide={props.addWide}
+          addWicket={props.addWicket}
+          disabled={
+            props.controlsDisabled
+          }
+          pendingNoBall={
+            props.pendingNoBall
+          }
+          statusText={
+            props.controlsStatus
+          }
         />
-
       </div>
 
-      {/* LOWER SECTION */}
-      <div className="
-        grid
-        grid-cols-1
-        lg:grid-cols-2
-        gap-6
-        mt-8
-      ">
-
+      <div
+        className="
+          grid
+          grid-cols-1
+          lg:grid-cols-2
+          gap-6
+          mt-8
+        "
+      >
         <BallHistory
           history={props.history}
         />
@@ -142,20 +134,48 @@ export default function LiveMatch(props) {
             props.fallOfWickets
           }
         />
-
       </div>
 
-      {/* MATCH SETUP */}
       <div className="mt-8">
-
         <MatchSetup
-          teams={props.teams}
+          battingTeam={
+            props.battingTeam
+          }
+          bowlingTeam={
+            props.bowlingTeam
+          }
+          innings={props.innings}
+          inningsReady={
+            props.inningsReady
+          }
+          matchLocked={
+            props.matchLocked
+          }
+          pendingBatterSelection={
+            props.pendingBatterSelection
+          }
+          pendingBowlerSelection={
+            props.pendingBowlerSelection
+          }
+          remainingBatters={
+            props.remainingBatters
+          }
+          selectBowler={
+            props.selectBowler
+          }
+          selectNextBatter={
+            props.selectNextBatter
+          }
           setTeamA={props.setTeamA}
           setTeamB={props.setTeamB}
+          startInnings={
+            props.startInnings
+          }
+          teamA={props.teamA}
+          teamB={props.teamB}
+          teams={props.teams}
         />
-
       </div>
-
     </div>
   )
 }

@@ -1,31 +1,94 @@
-import { useState, useEffect } from "react"
-
+import { useEffect, useState } from "react"
+import { Routes, Route } from "react-router-dom"
 import {
-  Routes,
-  Route,
-} from "react-router-dom"
+  addDoc,
+  collection,
+  getDocs,
+} from "firebase/firestore"
 
 import { db } from "./firebase"
 
-import {
-  collection,
-  getDocs,
-  addDoc,
-} from "firebase/firestore"
-
 import Navbar from "./components/Navbar"
 import Toast from "./components/Toast"
-import ExtrasCard from "./components/ExtrasCard"
 
 import Home from "./pages/Home"
 import Teams from "./pages/Teams"
 import History from "./pages/History"
 import LiveMatch from "./pages/LiveMatch"
 
-export default function App() {
+const INITIAL_EXTRAS = {
+  wides: 0,
+  noBalls: 0,
+}
 
-  // SCORE STATES
-  const [score, setScore] = useState(0)
+const createBatterStats = (name) => ({
+  name,
+  runs: 0,
+  balls: 0,
+  fours: 0,
+  sixes: 0,
+})
+
+const createBowlerStats = (name) => ({
+  name,
+  runs: 0,
+  wickets: 0,
+  balls: 0,
+})
+
+const formatOvers = (legalBalls) =>
+  `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`
+
+const getTeamKey = (team) =>
+  team?.id || team?.teamName || ""
+
+const getOtherActiveBatter = (
+  activeBatters,
+  strikerName
+) =>
+  activeBatters.find(
+    (name) => name !== strikerName
+  ) || ""
+
+const updateBowlerList = (
+  bowlers,
+  bowlerName,
+  updater
+) => {
+  const existingBowler =
+    bowlers.find(
+      (bowler) =>
+        bowler.name === bowlerName
+    )
+
+  if (!existingBowler) {
+    return [
+      ...bowlers,
+      updater(
+        createBowlerStats(bowlerName)
+      ),
+    ]
+  }
+
+  return bowlers.map((bowler) =>
+    bowler.name === bowlerName
+      ? updater(bowler)
+      : bowler
+  )
+}
+
+const sortMatches = (matches) =>
+  [...matches].sort(
+    (firstMatch, secondMatch) =>
+      new Date(
+        secondMatch.createdAt || 0
+      ) -
+      new Date(firstMatch.createdAt || 0)
+  )
+
+export default function App() {
+  const [score, setScore] =
+    useState(0)
 
   const [wickets, setWickets] =
     useState(0)
@@ -33,7 +96,6 @@ export default function App() {
   const [balls, setBalls] =
     useState(0)
 
-  // MATCH STATES
   const [maxOvers, setMaxOvers] =
     useState(2)
 
@@ -45,40 +107,32 @@ export default function App() {
 
   const [winner, setWinner] =
     useState("")
-  
-  // TOAST
+
   const [toast, setToast] =
     useState("")
 
-  // NO BALL FLOW
-  const [pendingNoBall, setPendingNoBall] =
-    useState(false)
+  const [
+    pendingNoBall,
+    setPendingNoBall,
+  ] = useState(false)
 
-  // EXTRAS
   const [extras, setExtras] =
-    useState({
-      wides: 0,
-      noBalls: 0,
-    })
+    useState(INITIAL_EXTRAS)
 
   const [matches, setMatches] =
     useState([])
 
-  // FREE HIT
   const [freeHit, setFreeHit] =
     useState(false)
 
-  // HISTORY
   const [history, setHistory] =
     useState([])
 
-  // FALL OF WICKETS
   const [
     fallOfWickets,
     setFallOfWickets,
   ] = useState([])
 
-  // TEAMS
   const [teams, setTeams] =
     useState([])
 
@@ -88,44 +142,142 @@ export default function App() {
   const [teamB, setTeamB] =
     useState(null)
 
-  // BATTERS
   const [batters, setBatters] =
-    useState([
-      {
-        name: "Batsman 1",
-        runs: 0,
-        balls: 0,
-        fours: 0,
-        sixes: 0,
-      },
-      {
-        name: "Batsman 2",
-        runs: 0,
-        balls: 0,
-        fours: 0,
-        sixes: 0,
-      },
-    ])
+    useState([])
 
   const [
-    currentStriker,
-    setCurrentStriker,
-  ] = useState(0)
+    activeBatters,
+    setActiveBatters,
+  ] = useState([])
 
-  // BOWLER
-  const [bowler, setBowler] =
-    useState({
-      name: "Bowler 1",
-      runs: 0,
-      wickets: 0,
-      balls: 0,
-    })
+  const [
+    strikerName,
+    setStrikerName,
+  ] = useState("")
 
-  // LOAD TEAMS
+  const [bowlers, setBowlers] =
+    useState([])
+
+  const [
+    currentBowlerName,
+    setCurrentBowlerName,
+  ] = useState("")
+
+  const [
+    inningsReady,
+    setInningsReady,
+  ] = useState(false)
+
+  const [
+    pendingBatterSelection,
+    setPendingBatterSelection,
+  ] = useState(null)
+
+  const [
+    pendingBowlerSelection,
+    setPendingBowlerSelection,
+  ] = useState(null)
+
+  const battingTeam =
+    innings === 1 ? teamA : teamB
+
+  const bowlingTeam =
+    innings === 1 ? teamB : teamA
+
+  const battingPlayers =
+    battingTeam?.players || []
+
+  const bowlingPlayers =
+    bowlingTeam?.players || []
+
+  const maxWickets =
+    battingPlayers.length > 0
+      ? Math.max(
+          battingPlayers.length - 1,
+          1
+        )
+      : 10
+
+  const usedBatterNames =
+    batters.map((batter) => batter.name)
+
+  const remainingBatters =
+    battingPlayers.filter(
+      (player) =>
+        !usedBatterNames.includes(player)
+    )
+
+  const currentBowler =
+    bowlers.find(
+      (bowler) =>
+        bowler.name === currentBowlerName
+    ) || null
+
+  const sameTeamsSelected =
+    teamA &&
+    teamB &&
+    getTeamKey(teamA) ===
+      getTeamKey(teamB)
+
+  const matchLocked =
+    inningsReady ||
+    balls > 0 ||
+    innings > 1 ||
+    Boolean(winner)
+
+  const controlsDisabled =
+    Boolean(winner) ||
+    !teamA ||
+    !teamB ||
+    sameTeamsSelected ||
+    !inningsReady ||
+    Boolean(
+      pendingBatterSelection
+    ) ||
+    Boolean(
+      pendingBowlerSelection
+    ) ||
+    !currentBowlerName
+
+  let setupStatus = ""
+
+  if (winner) {
+    setupStatus =
+      "Match finished. Start a fresh live match to score again."
+  } else if (!teamA || !teamB) {
+    setupStatus =
+      "Select Team A and Team B to set up the match."
+  } else if (sameTeamsSelected) {
+    setupStatus =
+      "Choose two different teams before starting the innings."
+  } else if (!inningsReady) {
+    setupStatus =
+      `Pick opening batters and a starting bowler for innings ${innings}.`
+  } else if (
+    pendingBatterSelection &&
+    pendingBowlerSelection
+  ) {
+    setupStatus =
+      "Choose the next batter and next bowler to continue."
+  } else if (
+    pendingBatterSelection
+  ) {
+    setupStatus =
+      `Choose the next batter for ${battingTeam?.teamName || "the batting side"}.`
+  } else if (
+    pendingBowlerSelection
+  ) {
+    setupStatus =
+      `Choose the next bowler for ${bowlingTeam?.teamName || "the bowling side"}.`
+  }
+
+  const controlsStatus =
+    pendingNoBall
+      ? "No ball active. Tap 0-6 to record the bat runs."
+      : setupStatus
+
   const loadTeams = async () => {
-
     try {
-
       const querySnapshot =
         await getDocs(
           collection(db, "teams")
@@ -134,27 +286,27 @@ export default function App() {
       const loadedTeams = []
 
       querySnapshot.forEach((doc) => {
-
         loadedTeams.push({
           id: doc.id,
           ...doc.data(),
         })
-
       })
 
+      loadedTeams.sort(
+        (firstTeam, secondTeam) =>
+          firstTeam.teamName.localeCompare(
+            secondTeam.teamName
+          )
+      )
+
       setTeams(loadedTeams)
-
     } catch (error) {
-
       console.log(error)
     }
   }
 
-  // LOAD MATCHES
   const loadMatches = async () => {
-
     try {
-
       const querySnapshot =
         await getDocs(
           collection(db, "matches")
@@ -163,445 +315,804 @@ export default function App() {
       const loadedMatches = []
 
       querySnapshot.forEach((doc) => {
-
         loadedMatches.push({
           id: doc.id,
           ...doc.data(),
         })
-
       })
 
-      setMatches(loadedMatches)
-
+      setMatches(
+        sortMatches(loadedMatches)
+      )
     } catch (error) {
-
       console.log(error)
     }
   }
 
   useEffect(() => {
-
     loadTeams()
-
     loadMatches()
-
   }, [])
 
-  // CREATE TEAM
-  const addTeam = (team) => {
-
-    setTeams(prev => [
-      ...prev,
-      team,
-    ])
-  }
-
-  // RESET MATCH
-  const resetMatch = () => {
-
-    setScore(0)
-
-    setWickets(0)
-
-    setBalls(0)
-
-    setFreeHit(false)
-
-    setHistory([])
-
-    setFallOfWickets([])
-
-    setBatters([
-      {
-        name: "Batsman 1",
-        runs: 0,
-        balls: 0,
-      },
-      {
-        name: "Batsman 2",
-        runs: 0,
-        balls: 0,
-      },
-    ])
-
-    setBowler({
-      name: "Bowler 1",
-      runs: 0,
-      wickets: 0,
-      balls: 0,
-    })
-
-    setCurrentStriker(0)
-  }
-
-  // SAVE MATCH
-  const saveMatch = async (
-    winnerName
-  ) => {
-
-    const overs =
-      `${Math.floor(balls / 6)}.${balls % 6}`
-
-    const matchData = {
-
-      teamA:
-        teamA?.teamName || "Team A",
-
-      teamB:
-        teamB?.teamName || "Team B",
-
-      winner: winnerName,
-
-      score: `${score}/${wickets}`,
-
-      overs,
-
-      target,
-
-      innings,
-
-      fallOfWickets,
-
-      history,
-
-      createdAt:
-        new Date().toISOString(),
-    }
-
-    try {
-
-      await addDoc(
-        collection(db, "matches"),
-        matchData
-      )
-
-      loadMatches()
-
-    } catch (error) {
-
-      console.log(error)
-    }
-  }
-
-  // MATCH END LOGIC
-  const checkMatchEnd = (
-    updatedBalls,
-    updatedScore,
-    updatedWickets
-  ) => {
-
-    const totalBalls =
-      maxOvers * 6
-
-    // FIRST INNINGS END
-    if (
-      innings === 1 &&
-      (
-        updatedBalls >= totalBalls ||
-        updatedWickets >= 10
-      )
-    ) {
-
-      setTarget(updatedScore + 1)
-
-      showToast(
-        `🎯 Target: ${updatedScore + 1}`
-      )
-
-      resetMatch()
-
-      setInnings(2)
-
-      return
-    }
-
-    // SECOND INNINGS WIN
-    if (
-      innings === 2 &&
-      target &&
-      updatedScore >= target
-    ) {
-
-      const result =
-        `${teamB?.teamName || "Team B"} Won`
-
-      setWinner(result)
-
-      saveMatch(result)
-
-      showToast("🏆 Match Finished")
-
-      return
-    }
-
-    // SECOND INNINGS LOSE
-    if (
-      innings === 2 &&
-      (
-        updatedBalls >= totalBalls ||
-        updatedWickets >= 10
-      )
-    ) {
-
-      const result =
-        `${teamA?.teamName || "Team A"} Won`
-
-      setWinner(result)
-
-      saveMatch(result)
-
-      showToast("🏆 Match Finished")
-    }
-  }
-
-  // ADD RUNS
-  const addRuns = (runs) => {
-
-    if (winner) return
-
-    let totalRuns = runs
-
-    // NO BALL FLOW
-    if (pendingNoBall) {
-
-      totalRuns += 1
-
-      setPendingNoBall(false)
-
-      setFreeHit(true)
-    }
-
-    const updatedScore =
-      score + totalRuns
-
-    const updatedBalls =
-      pendingNoBall
-        ? balls
-        : balls + 1
-
-    setScore(updatedScore)
-
-    setBalls(updatedBalls)
-
-    setHistory(prev => [
-      ...prev,
-      totalRuns,
-    ])
-
-    // BATTER UPDATE
-    setBatters(prev => {
-
-      return prev.map((batter, index) => {
-
-        if (index !== currentStriker) {
-          return batter
-        }
-
-        return {
-
-          ...batter,
-
-          runs: batter.runs + runs,
-
-          balls:
-            pendingNoBall
-              ? batter.balls
-              : batter.balls + 1,
-
-          fours:
-            runs === 4
-              ? batter.fours + 1
-              : batter.fours,
-
-          sixes:
-            runs === 6
-              ? batter.sixes + 1
-              : batter.sixes,
-
-        }
-      })
-    })
-
-    // BOWLER UPDATE
-    setBowler(prev => ({
-      ...prev,
-      runs: prev.runs + totalRuns,
-      balls: prev.balls + 1,
-    }))
-
-    // STRIKE ROTATION
-    if (
-      runs === 1 ||
-      runs === 3
-    ) {
-
-      setCurrentStriker(prev =>
-        prev === 0 ? 1 : 0
-      )
-    }
-
-    // OVER END ROTATION
-    if (updatedBalls % 6 === 0) {
-
-      setCurrentStriker(prev =>
-        prev === 0 ? 1 : 0
-      )
-    }
-
-    // FREE HIT RESET
-    if (freeHit) {
-      setFreeHit(false)
-    }
-
-    checkMatchEnd(
-      updatedBalls,
-      updatedScore,
-      wickets
-    )
-  }
-
-  // WICKET
-  const addWicket = () => {
-
-    if (winner) return
-
-    if (freeHit) {
-
-      showToast(
-        "🏏 Cannot Out On Free Hit"
-      )
-
-      setFreeHit(false)
-
-      return
-    }
-
-    const updatedBalls =
-      balls + 1
-
-    const newWicket =
-      wickets + 1
-
-    // FIXED FOW BUG
-    const wicketInfo = {
-      wicket: newWicket,
-      score: score,
-      batter:
-        batters[currentStriker].name,
-      over:
-        `${Math.floor(updatedBalls / 6)}.${updatedBalls % 6}`,
-
-    }
-
-    setWickets(newWicket)
-
-    setBalls(updatedBalls)
-
-    setHistory(prev => [
-      ...prev,
-      "W",
-    ])
-
-    setFallOfWickets(prev => [
-      ...prev,
-      wicketInfo,
-    ])
-
-    // BOWLER UPDATE
-    setBowler(prev => ({
-      ...prev,
-      wickets:
-        prev.wickets + 1,
-      balls: prev.balls + 1,
-    }))
-
-    // NEW BATTER
-    setBatters(prev => {
-
-      const updated = [...prev]
-
-      updated[currentStriker] = {
-        name: `Batsman ${newWicket + 2}`,
-        runs: 0,
-        balls: 0,
-        fours: 0,
-        sixes: 0,
-      }
-
-      return updated
-    })
-
-    checkMatchEnd(
-      updatedBalls,
-      score,
-      newWicket
-    )
-  }
-
-  // WIDE
-  const addWide = () => {
-
-    if (winner) return
-
-    setScore(prev => prev + 1)
-
-    setHistory(prev => [
-      ...prev,
-      "Wd",
-    ])
-
-    setExtras(prev => ({
-      ...prev,
-      wides: prev.wides + 1,
-    }))
-
-    setBowler(prev => ({
-      ...prev,
-      runs: prev.runs + 1,
-    }))
-  }
-
-  // NO BALL
-  const addNoBall = () => {
-
-    if (winner) return
-
-    setPendingNoBall(true)
-
-    setExtras(prev => ({
-      ...prev,
-      noBalls:
-        prev.noBalls + 1,
-    }))
-
-    showToast(
-      "🏏 NO BALL"
-    )
-  }
-
-  // OVERS
-  const overs =
-    `${Math.floor(balls / 6)}.${balls % 6}`
-
-  const showToast = (msg) => {
-
-    setToast(msg)
+  const showToast = (message) => {
+    setToast(message)
 
     setTimeout(() => {
       setToast("")
     }, 2500)
   }
 
+  const addTeam = (team) => {
+    setTeams((previousTeams) =>
+      [
+        ...previousTeams,
+        team,
+      ].sort((firstTeam, secondTeam) =>
+        firstTeam.teamName.localeCompare(
+          secondTeam.teamName
+        )
+      )
+    )
+  }
+
+  const resetInningsState = () => {
+    setScore(0)
+    setWickets(0)
+    setBalls(0)
+    setFreeHit(false)
+    setPendingNoBall(false)
+    setExtras(INITIAL_EXTRAS)
+    setHistory([])
+    setFallOfWickets([])
+    setBatters([])
+    setActiveBatters([])
+    setStrikerName("")
+    setBowlers([])
+    setCurrentBowlerName("")
+    setInningsReady(false)
+    setPendingBatterSelection(null)
+    setPendingBowlerSelection(null)
+  }
+
+  const saveMatch = async (
+    winnerName,
+    snapshot
+  ) => {
+    const matchData = {
+      teamA:
+        teamA?.teamName || "Team A",
+      teamB:
+        teamB?.teamName || "Team B",
+      winner: winnerName,
+      score: `${snapshot.score}/${snapshot.wickets}`,
+      overs: formatOvers(
+        snapshot.balls
+      ),
+      target: snapshot.target,
+      innings: snapshot.innings,
+      extras: snapshot.extras,
+      fallOfWickets:
+        snapshot.fallOfWickets,
+      history: snapshot.history,
+      batters: snapshot.batters,
+      bowlers: snapshot.bowlers,
+      createdAt:
+        new Date().toISOString(),
+    }
+
+    try {
+      const docRef = await addDoc(
+        collection(db, "matches"),
+        matchData
+      )
+
+      setMatches((previousMatches) =>
+        sortMatches([
+          {
+            id: docRef.id,
+            ...matchData,
+          },
+          ...previousMatches,
+        ])
+      )
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const finishMatch = (
+    result,
+    snapshot
+  ) => {
+    setWinner(result)
+    saveMatch(result, snapshot)
+    showToast("Match finished")
+  }
+
+  const prepareNextInnings = (
+    nextTarget
+  ) => {
+    resetInningsState()
+    setTarget(nextTarget)
+    setInnings(2)
+    showToast(
+      `Target: ${nextTarget}`
+    )
+  }
+
+  const startInnings = (
+    openerOne,
+    openerTwo,
+    startingBowler
+  ) => {
+    if (!teamA || !teamB) {
+      showToast(
+        "Select both teams first"
+      )
+      return
+    }
+
+    if (sameTeamsSelected) {
+      showToast(
+        "Pick two different teams"
+      )
+      return
+    }
+
+    if (
+      !openerOne ||
+      !openerTwo ||
+      openerOne === openerTwo
+    ) {
+      showToast(
+        "Choose two different openers"
+      )
+      return
+    }
+
+    if (
+      !startingBowler ||
+      !bowlingPlayers.includes(
+        startingBowler
+      )
+    ) {
+      showToast(
+        "Choose the starting bowler"
+      )
+      return
+    }
+
+    const openingBatters = [
+      createBatterStats(
+        openerOne
+      ),
+      createBatterStats(
+        openerTwo
+      ),
+    ]
+
+    setBatters(openingBatters)
+    setActiveBatters([
+      openerOne,
+      openerTwo,
+    ])
+    setStrikerName(openerOne)
+    setBowlers([
+      createBowlerStats(
+        startingBowler
+      ),
+    ])
+    setCurrentBowlerName(
+      startingBowler
+    )
+    setInningsReady(true)
+    setPendingBatterSelection(null)
+    setPendingBowlerSelection(null)
+    setPendingNoBall(false)
+    setFreeHit(false)
+
+    showToast(
+      `Innings ${innings} started`
+    )
+  }
+
+  const selectNextBatter = (
+    nextBatterName
+  ) => {
+    if (
+      !pendingBatterSelection
+    ) {
+      return
+    }
+
+    if (
+      !nextBatterName ||
+      !remainingBatters.includes(
+        nextBatterName
+      )
+    ) {
+      showToast(
+        "Choose the next batter"
+      )
+      return
+    }
+
+    const updatedBatters = [
+      ...batters,
+      createBatterStats(
+        nextBatterName
+      ),
+    ]
+
+    const updatedActiveBatters =
+      activeBatters.map((name) =>
+        name ===
+        pendingBatterSelection.dismissedName
+          ? nextBatterName
+          : name
+      )
+
+    const nextStriker =
+      pendingBatterSelection.overCompleted
+        ? pendingBatterSelection.survivingBatterName
+        : nextBatterName
+
+    setBatters(updatedBatters)
+    setActiveBatters(
+      updatedActiveBatters
+    )
+    setStrikerName(nextStriker)
+    setPendingBatterSelection(null)
+
+    if (
+      pendingBowlerSelection
+    ) {
+      showToast(
+        "Choose the next bowler"
+      )
+      return
+    }
+
+    showToast(
+      `${nextBatterName} is in`
+    )
+  }
+
+  const selectBowler = (
+    nextBowlerName
+  ) => {
+    if (!nextBowlerName) {
+      showToast(
+        "Choose the next bowler"
+      )
+      return
+    }
+
+    const mustRotateBowler =
+      pendingBowlerSelection &&
+      bowlingPlayers.length > 1
+
+    if (
+      mustRotateBowler &&
+      nextBowlerName ===
+        pendingBowlerSelection.previousBowlerName
+    ) {
+      showToast(
+        "Choose a different bowler for the new over"
+      )
+      return
+    }
+
+    const updatedBowlers =
+      bowlers.some(
+        (bowler) =>
+          bowler.name ===
+          nextBowlerName
+      )
+        ? bowlers
+        : [
+            ...bowlers,
+            createBowlerStats(
+              nextBowlerName
+            ),
+          ]
+
+    setBowlers(updatedBowlers)
+    setCurrentBowlerName(
+      nextBowlerName
+    )
+    setPendingBowlerSelection(
+      null
+    )
+
+    if (
+      pendingBatterSelection
+    ) {
+      showToast(
+        "Choose the next batter"
+      )
+      return
+    }
+
+    showToast(
+      `${nextBowlerName} is bowling`
+    )
+  }
+
+  const handlePostDeliveryState = ({
+    updatedScore,
+    updatedWickets,
+    updatedBalls,
+    updatedHistory,
+    updatedFallOfWickets,
+    updatedBatters,
+    updatedBowlers,
+    updatedExtras,
+    pendingBatterData = null,
+  }) => {
+    const totalBalls =
+      maxOvers * 6
+
+    const inningsClosed =
+      updatedBalls >= totalBalls ||
+      updatedWickets >= maxWickets
+
+    const snapshot = {
+      score: updatedScore,
+      wickets: updatedWickets,
+      balls: updatedBalls,
+      innings,
+      target,
+      extras: updatedExtras,
+      history: updatedHistory,
+      fallOfWickets:
+        updatedFallOfWickets,
+      batters: updatedBatters,
+      bowlers: updatedBowlers,
+    }
+
+    if (
+      innings === 1 &&
+      inningsClosed
+    ) {
+      prepareNextInnings(
+        updatedScore + 1
+      )
+      return
+    }
+
+    if (
+      innings === 2 &&
+      target &&
+      updatedScore >= target
+    ) {
+      const result =
+        `${teamB?.teamName || "Team B"} Won`
+
+      finishMatch(
+        result,
+        snapshot
+      )
+
+      return
+    }
+
+    if (
+      innings === 2 &&
+      inningsClosed
+    ) {
+      const result =
+        `${teamA?.teamName || "Team A"} Won`
+
+      finishMatch(
+        result,
+        snapshot
+      )
+
+      return
+    }
+
+    const overCompleted =
+      updatedBalls > 0 &&
+      updatedBalls % 6 === 0
+
+    if (pendingBatterData) {
+      setPendingBatterSelection(
+        pendingBatterData
+      )
+    }
+
+    if (overCompleted) {
+      setPendingBowlerSelection({
+        previousBowlerName:
+          currentBowlerName,
+      })
+    }
+
+    if (
+      pendingBatterData &&
+      overCompleted
+    ) {
+      showToast(
+        "Choose the next batter and bowler"
+      )
+      return
+    }
+
+    if (pendingBatterData) {
+      showToast(
+        "Choose the next batter"
+      )
+      return
+    }
+
+    if (overCompleted) {
+      showToast(
+        "Choose the next bowler"
+      )
+    }
+  }
+
+  const addRuns = (runs) => {
+    if (
+      winner ||
+      controlsDisabled ||
+      !currentBowlerName
+    ) {
+      return
+    }
+
+    const isNoBallDelivery =
+      pendingNoBall
+
+    const legalBall =
+      !isNoBallDelivery
+
+    const totalRuns =
+      runs +
+      (isNoBallDelivery ? 1 : 0)
+
+    const updatedScore =
+      score + totalRuns
+
+    const updatedBalls =
+      balls +
+      (legalBall ? 1 : 0)
+
+    const historyLabel =
+      isNoBallDelivery
+        ? runs === 0
+          ? "Nb"
+          : `Nb+${runs}`
+        : runs
+
+    const updatedHistory = [
+      ...history,
+      {
+        over: Math.floor(
+          balls / 6
+        ),
+        label: historyLabel,
+      },
+    ]
+
+    const updatedBatters =
+      batters.map((batter) =>
+        batter.name !== strikerName
+          ? batter
+          : {
+              ...batter,
+              runs:
+                batter.runs + runs,
+              balls:
+                batter.balls +
+                (legalBall ? 1 : 0),
+              fours:
+                runs === 4
+                  ? batter.fours + 1
+                  : batter.fours,
+              sixes:
+                runs === 6
+                  ? batter.sixes + 1
+                  : batter.sixes,
+            }
+      )
+
+    const updatedBowlers =
+      updateBowlerList(
+        bowlers,
+        currentBowlerName,
+        (bowler) => ({
+          ...bowler,
+          runs:
+            bowler.runs + totalRuns,
+          balls:
+            bowler.balls +
+            (legalBall ? 1 : 0),
+        })
+      )
+
+    const updatedExtras =
+      extras
+
+    const otherBatter =
+      getOtherActiveBatter(
+        activeBatters,
+        strikerName
+      )
+
+    let nextStriker = strikerName
+
+    if (
+      runs === 1 ||
+      runs === 3
+    ) {
+      nextStriker =
+        otherBatter || strikerName
+    }
+
+    if (
+      legalBall &&
+      updatedBalls % 6 === 0
+    ) {
+      nextStriker =
+        nextStriker === strikerName
+          ? otherBatter ||
+            strikerName
+          : strikerName
+    }
+
+    setScore(updatedScore)
+    setBalls(updatedBalls)
+    setHistory(updatedHistory)
+    setBatters(updatedBatters)
+    setBowlers(updatedBowlers)
+    setStrikerName(nextStriker)
+    setPendingNoBall(false)
+    setFreeHit(
+      isNoBallDelivery
+    )
+
+    handlePostDeliveryState({
+      updatedScore,
+      updatedWickets: wickets,
+      updatedBalls,
+      updatedHistory,
+      updatedFallOfWickets:
+        fallOfWickets,
+      updatedBatters,
+      updatedBowlers,
+      updatedExtras,
+    })
+  }
+
+  const addWicket = () => {
+    if (
+      winner ||
+      controlsDisabled ||
+      !currentBowlerName
+    ) {
+      return
+    }
+
+    if (pendingNoBall) {
+      showToast(
+        "Complete the no ball outcome first"
+      )
+      return
+    }
+
+    if (freeHit) {
+      setFreeHit(false)
+      showToast(
+        "Cannot give wicket on a free hit"
+      )
+      return
+    }
+
+    const updatedBalls =
+      balls + 1
+
+    const updatedWickets =
+      wickets + 1
+
+    const dismissedBatterName =
+      strikerName
+
+    const survivingBatterName =
+      getOtherActiveBatter(
+        activeBatters,
+        strikerName
+      )
+
+    const overCompleted =
+      updatedBalls % 6 === 0
+
+    const wicketInfo = {
+      wicket: updatedWickets,
+      score,
+      batter:
+        dismissedBatterName,
+      over: formatOvers(
+        updatedBalls
+      ),
+    }
+
+    const updatedHistory = [
+      ...history,
+      {
+        over: Math.floor(
+          balls / 6
+        ),
+        label: "W",
+      },
+    ]
+
+    const updatedFallOfWickets = [
+      ...fallOfWickets,
+      wicketInfo,
+    ]
+
+    const updatedBowlers =
+      updateBowlerList(
+        bowlers,
+        currentBowlerName,
+        (bowler) => ({
+          ...bowler,
+          wickets:
+            bowler.wickets + 1,
+          balls:
+            bowler.balls + 1,
+        })
+      )
+
+    const inningsWillContinue =
+      updatedWickets < maxWickets &&
+      updatedBalls <
+        maxOvers * 6
+
+    const nextStriker =
+      overCompleted
+        ? survivingBatterName
+        : ""
+
+    setWickets(updatedWickets)
+    setBalls(updatedBalls)
+    setHistory(updatedHistory)
+    setFallOfWickets(
+      updatedFallOfWickets
+    )
+    setBowlers(updatedBowlers)
+    setStrikerName(nextStriker)
+    setPendingNoBall(false)
+    setFreeHit(false)
+
+    handlePostDeliveryState({
+      updatedScore: score,
+      updatedWickets,
+      updatedBalls,
+      updatedHistory,
+      updatedFallOfWickets,
+      updatedBatters: batters,
+      updatedBowlers,
+      updatedExtras: extras,
+      pendingBatterData:
+        inningsWillContinue
+          ? {
+              dismissedName:
+                dismissedBatterName,
+              survivingBatterName,
+              overCompleted,
+            }
+          : null,
+    })
+  }
+
+  const addWide = () => {
+    if (
+      winner ||
+      controlsDisabled ||
+      !currentBowlerName
+    ) {
+      return
+    }
+
+    if (pendingNoBall) {
+      showToast(
+        "Complete the no ball outcome first"
+      )
+      return
+    }
+
+    const updatedScore =
+      score + 1
+
+    const updatedHistory = [
+      ...history,
+      {
+        over: Math.floor(
+          balls / 6
+        ),
+        label: "Wd",
+      },
+    ]
+
+    const updatedExtras = {
+      ...extras,
+      wides:
+        extras.wides + 1,
+    }
+
+    const updatedBowlers =
+      updateBowlerList(
+        bowlers,
+        currentBowlerName,
+        (bowler) => ({
+          ...bowler,
+          runs:
+            bowler.runs + 1,
+        })
+      )
+
+    setScore(updatedScore)
+    setHistory(updatedHistory)
+    setExtras(updatedExtras)
+    setBowlers(updatedBowlers)
+
+    handlePostDeliveryState({
+      updatedScore,
+      updatedWickets: wickets,
+      updatedBalls: balls,
+      updatedHistory,
+      updatedFallOfWickets:
+        fallOfWickets,
+      updatedBatters: batters,
+      updatedBowlers,
+      updatedExtras,
+    })
+  }
+
+  const addNoBall = () => {
+    if (
+      winner ||
+      controlsDisabled
+    ) {
+      return
+    }
+
+    if (pendingNoBall) {
+      showToast(
+        "Record the current no ball first"
+      )
+      return
+    }
+
+    setPendingNoBall(true)
+    setExtras((previousExtras) => ({
+      ...previousExtras,
+      noBalls:
+        previousExtras.noBalls + 1,
+    }))
+
+    showToast(
+      "No ball. Record the bat runs now."
+    )
+  }
+
+  const overs =
+    formatOvers(balls)
+
   return (
-    <div className="
+    <div
+      className="
         min-h-screen
         bg-gradient-to-br
         from-black
         via-zinc-900
         to-zinc-950
         text-white
-      ">
-      
+      "
+    >
       <Toast message={toast} />
 
       <Navbar />
@@ -614,9 +1125,7 @@ export default function App() {
           mx-auto
         "
       >
-
         <Routes>
-
           <Route
             path="/"
             element={<Home />}
@@ -625,18 +1134,14 @@ export default function App() {
           <Route
             path="/teams"
             element={
-              <Teams
-                addTeam={addTeam}
-              />
+              <Teams addTeam={addTeam} />
             }
           />
 
           <Route
             path="/history"
             element={
-              <History
-                matches={matches}
-              />
+              <History matches={matches} />
             }
           />
 
@@ -644,40 +1149,90 @@ export default function App() {
             path="/live"
             element={
               <LiveMatch
-                maxOvers={maxOvers}
-                setMaxOvers={setMaxOvers}
-                score={score}
-                wickets={wickets}
-                overs={overs}
-                freeHit={freeHit}
-                innings={innings}
-                target={target}
-                winner={winner}
-                teamA={teamA}
-                teamB={teamB}
+                activeBatters={
+                  activeBatters
+                }
+                addNoBall={addNoBall}
+                addRuns={addRuns}
+                addWide={addWide}
+                addWicket={addWicket}
+                balls={balls}
                 batters={batters}
-                currentStriker={currentStriker}
-                bowler={bowler}
+                bowlers={bowlers}
+                controlsDisabled={
+                  controlsDisabled
+                }
+                controlsStatus={
+                  controlsStatus
+                }
+                currentBowler={
+                  currentBowler
+                }
+                currentBowlerName={
+                  currentBowlerName
+                }
+                extras={extras}
+                fallOfWickets={
+                  fallOfWickets
+                }
+                freeHit={freeHit}
                 history={history}
-                fallOfWickets={fallOfWickets}
-                teams={teams}
+                innings={innings}
+                inningsReady={
+                  inningsReady
+                }
+                matchLocked={
+                  matchLocked
+                }
+                maxOvers={maxOvers}
+                overs={overs}
+                pendingBatterSelection={
+                  pendingBatterSelection
+                }
+                pendingBowlerSelection={
+                  pendingBowlerSelection
+                }
+                pendingNoBall={
+                  pendingNoBall
+                }
+                remainingBatters={
+                  remainingBatters
+                }
+                score={score}
+                selectBowler={
+                  selectBowler
+                }
+                selectNextBatter={
+                  selectNextBatter
+                }
+                setMaxOvers={
+                  setMaxOvers
+                }
                 setTeamA={setTeamA}
                 setTeamB={setTeamB}
-                addRuns={addRuns}
-                addWicket={addWicket}
-                addWide={addWide}
-                addNoBall={addNoBall}
-                extras={extras}
-                balls={balls}
-                maxOvers={maxOvers}
+                startInnings={
+                  startInnings
+                }
+                strikerName={
+                  strikerName
+                }
+                target={target}
+                teamA={teamA}
+                teamB={teamB}
+                teams={teams}
+                winner={winner}
+                wickets={wickets}
+                battingTeam={
+                  battingTeam
+                }
+                bowlingTeam={
+                  bowlingTeam
+                }
               />
             }
           />
-
         </Routes>
-
       </div>
-
     </div>
   )
 }
