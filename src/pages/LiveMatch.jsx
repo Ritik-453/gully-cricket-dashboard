@@ -17,40 +17,6 @@ export default function LiveMatch(props) {
         mx-auto
       "
     >
-      <div className="mb-6">
-        <label
-          className="
-            block
-            mb-2
-            text-zinc-300
-          "
-        >
-          Total Overs
-        </label>
-
-        <input
-          type="number"
-          min="1"
-          disabled={props.matchLocked}
-          value={props.maxOvers}
-          onChange={(event) =>
-            props.setMaxOvers(
-              Number(
-                event.target.value
-              ) || 1
-            )
-          }
-          className="
-            bg-zinc-800
-            p-3
-            rounded-xl
-            w-full
-            disabled:opacity-50
-            disabled:cursor-not-allowed
-          "
-        />
-      </div>
-
       <div
         className="
           grid
@@ -107,6 +73,7 @@ export default function LiveMatch(props) {
           disabled={
             props.controlsDisabled
           }
+          freeHit={props.freeHit}
           pendingNoBall={
             props.pendingNoBall
           }
@@ -166,11 +133,15 @@ export default function LiveMatch(props) {
           selectNextBatter={
             props.selectNextBatter
           }
+          setMaxOvers={
+            props.setMaxOvers
+          }
           setTeamA={props.setTeamA}
           setTeamB={props.setTeamB}
           startInnings={
             props.startInnings
           }
+          maxOvers={props.maxOvers}
           teamA={props.teamA}
           teamB={props.teamB}
           teams={props.teams}

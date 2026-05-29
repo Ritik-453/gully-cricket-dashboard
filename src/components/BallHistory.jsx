@@ -1,6 +1,24 @@
 export default function BallHistory({
   history,
 }) {
+  const wicketLabels = [
+    "W",
+    "B",
+    "C",
+    "LBW",
+    "ST",
+    "RO",
+  ]
+
+  const isWicketLabel = (label) =>
+    wicketLabels.some(
+      (wicketCode) =>
+        label === wicketCode ||
+        label.startsWith(
+          `${wicketCode}(`
+        )
+    )
+
   const overs = history.reduce(
     (
       groupedOvers,
@@ -41,16 +59,16 @@ export default function BallHistory({
   const getBallStyle = (ball) => {
     const label = String(ball)
 
-    if (label === "W") {
-      return "bg-red-600"
-    }
-
     if (label === "Wd") {
       return "bg-yellow-500 text-black"
     }
 
     if (label.startsWith("Nb")) {
       return "bg-purple-600"
+    }
+
+    if (isWicketLabel(label)) {
+      return "bg-red-600"
     }
 
     if (label === "4") {

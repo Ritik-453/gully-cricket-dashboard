@@ -1,12 +1,27 @@
 import { useEffect, useState } from "react"
 import { Routes, Route } from "react-router-dom"
 import {
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+} from "firebase/auth"
+import {
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   getDocs,
+  updateDoc,
 } from "firebase/firestore"
 
-import { db } from "./firebase"
+import {
+  auth,
+  db,
+  googleProvider,
+} from "./firebase"
 
 import Navbar from "./components/Navbar"
 import Toast from "./components/Toast"
@@ -35,6 +50,39 @@ const createBowlerStats = (name) => ({
   wickets: 0,
   balls: 0,
 })
+
+const DISMISSAL_OPTIONS = [
+  {
+    value: "bowled",
+    label: "Bowled",
+    shortLabel: "B",
+    countsForBowler: true,
+  },
+  {
+    value: "caught",
+    label: "Caught",
+    shortLabel: "C",
+    countsForBowler: true,
+  },
+  {
+    value: "lbw",
+    label: "LBW",
+    shortLabel: "LBW",
+    countsForBowler: true,
+  },
+  {
+    value: "stumped",
+    label: "Stumped",
+    shortLabel: "ST",
+    countsForBowler: true,
+  },
+  {
+    value: "run_out",
+    label: "Run Out",
+    shortLabel: "RO",
+    countsForBowler: false,
+  },
+]
 
 const formatOvers = (legalBalls) =>
   `${Math.floor(legalBalls / 6)}.${legalBalls % 6}`
@@ -86,7 +134,116 @@ const sortMatches = (matches) =>
       new Date(firstMatch.createdAt || 0)
   )
 
+const sortTeams = (teams) =>
+  [...teams].sort(
+    (firstTeam, secondTeam) =>
+      firstTeam.teamName.localeCompare(
+        secondTeam.teamName
+      )
+  )
+
+const upsertTeamInList = (
+  teams,
+  nextTeam
+) => {
+  const updatedTeams = teams.some(
+    (team) => team.id === nextTeam.id
+  )
+    ? teams.map((team) =>
+        team.id === nextTeam.id
+          ? nextTeam
+          : team
+      )
+    : [...teams, nextTeam]
+
+  return sortTeams(updatedTeams)
+}
+
+const getDismissalOption = (
+  dismissalType
+) =>
+  DISMISSAL_OPTIONS.find(
+    (option) =>
+      option.value === dismissalType
+  ) || DISMISSAL_OPTIONS[0]
+
+const getRunOutHistoryLabel = (
+  completedRuns,
+  isNoBallDelivery
+) => {
+  const runLabel =
+    completedRuns > 0
+      ? `RO(${completedRuns})`
+      : "RO"
+
+  if (isNoBallDelivery) {
+    return completedRuns > 0
+      ? `Nb+${runLabel}`
+      : "Nb+RO"
+  }
+
+  return runLabel
+}
+
+const getRunOutNextStrikerMode = (
+  completedRuns,
+  overCompleted
+) => {
+  const oddRuns =
+    completedRuns % 2 === 1
+
+  if (overCompleted) {
+    return oddRuns
+      ? "new_batter"
+      : "survivor"
+  }
+
+  return oddRuns
+    ? "survivor"
+    : "new_batter"
+}
+
+const mapAuthUser = (user) => ({
+  id: user.uid,
+  name:
+    user.displayName ||
+    user.email?.split("@")[0] ||
+    "Scorer",
+  email: user.email || "",
+})
+
+const getAuthErrorMessage = (
+  error,
+  fallbackMessage
+) => {
+  switch (error?.code) {
+    case "auth/email-already-in-use":
+      return "This email is already in use."
+    case "auth/invalid-email":
+      return "Enter a valid email address."
+    case "auth/invalid-credential":
+      return "Incorrect email or password."
+    case "auth/popup-closed-by-user":
+      return "Google sign-in was closed before finishing."
+    case "auth/too-many-requests":
+      return "Too many attempts. Please try again later."
+    case "auth/weak-password":
+      return "Choose a stronger password."
+    default:
+      return fallbackMessage
+  }
+}
+
 export default function App() {
+  const [currentUser, setCurrentUser] =
+    useState(null)
+
+  const [authReady, setAuthReady] =
+    useState(false)
+
+  const [authBusy, setAuthBusy] =
+    useState(false)
+
   const [score, setScore] =
     useState(0)
 
@@ -273,7 +430,7 @@ export default function App() {
 
   const controlsStatus =
     pendingNoBall
-      ? "No ball active. Tap 0-6 to record the bat runs."
+      ? "No ball active. Record bat runs or a run out outcome."
       : setupStatus
 
   const loadTeams = async () => {
@@ -292,14 +449,7 @@ export default function App() {
         })
       })
 
-      loadedTeams.sort(
-        (firstTeam, secondTeam) =>
-          firstTeam.teamName.localeCompare(
-            secondTeam.teamName
-          )
-      )
-
-      setTeams(loadedTeams)
+      setTeams(sortTeams(loadedTeams))
     } catch (error) {
       console.log(error)
     }
@@ -334,6 +484,70 @@ export default function App() {
     loadMatches()
   }, [])
 
+  useEffect(() => {
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        (user) => {
+          setCurrentUser(
+            user
+              ? mapAuthUser(user)
+              : null
+          )
+
+          setAuthReady(true)
+        }
+      )
+
+    return () => {
+      unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    setTeamA((previousTeam) => {
+      if (!previousTeam) {
+        return previousTeam
+      }
+
+      const refreshedTeam =
+        teams.find(
+          (team) =>
+            getTeamKey(team) ===
+            getTeamKey(previousTeam)
+        ) || null
+
+      if (refreshedTeam) {
+        return refreshedTeam
+      }
+
+      return matchLocked
+        ? previousTeam
+        : null
+    })
+
+    setTeamB((previousTeam) => {
+      if (!previousTeam) {
+        return previousTeam
+      }
+
+      const refreshedTeam =
+        teams.find(
+          (team) =>
+            getTeamKey(team) ===
+            getTeamKey(previousTeam)
+        ) || null
+
+      if (refreshedTeam) {
+        return refreshedTeam
+      }
+
+      return matchLocked
+        ? previousTeam
+        : null
+    })
+  }, [teams, matchLocked])
+
   const showToast = (message) => {
     setToast(message)
 
@@ -342,17 +556,406 @@ export default function App() {
     }, 2500)
   }
 
-  const addTeam = (team) => {
-    setTeams((previousTeams) =>
-      [
-        ...previousTeams,
-        team,
-      ].sort((firstTeam, secondTeam) =>
-        firstTeam.teamName.localeCompare(
-          secondTeam.teamName
+  const updateCurrentUserName = async (
+    nextName
+  ) => {
+    const trimmedName =
+      nextName.trim()
+
+    if (!trimmedName) {
+      showToast(
+        "Enter a scorer name"
+      )
+      return false
+    }
+
+    if (!auth.currentUser) {
+      showToast(
+        "Sign in to update your name"
+      )
+      return false
+    }
+
+    setAuthBusy(true)
+
+    try {
+      await updateProfile(
+        auth.currentUser,
+        {
+          displayName: trimmedName,
+        }
+      )
+
+      setCurrentUser((previousUser) =>
+        previousUser
+          ? {
+              ...previousUser,
+              name: trimmedName,
+            }
+          : previousUser
+      )
+
+      showToast("Scorer name updated")
+      return true
+    } catch (error) {
+      console.log(error)
+      showToast(
+        getAuthErrorMessage(
+          error,
+          "Error updating name"
         )
       )
-    )
+      return false
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const emailSignup = async ({
+    name,
+    email,
+    password,
+  }) => {
+    const trimmedName = name.trim()
+    const trimmedEmail =
+      email.trim()
+
+    if (!trimmedName) {
+      showToast(
+        "Enter a display name"
+      )
+      return false
+    }
+
+    if (!trimmedEmail) {
+      showToast("Enter an email")
+      return false
+    }
+
+    if (password.length < 6) {
+      showToast(
+        "Password must be at least 6 characters"
+      )
+      return false
+    }
+
+    setAuthBusy(true)
+
+    try {
+      const credentials =
+        await createUserWithEmailAndPassword(
+          auth,
+          trimmedEmail,
+          password
+        )
+
+      await updateProfile(
+        credentials.user,
+        {
+          displayName: trimmedName,
+        }
+      )
+
+      setCurrentUser({
+        id: credentials.user.uid,
+        name: trimmedName,
+        email:
+          credentials.user.email ||
+          trimmedEmail,
+      })
+
+      showToast(
+        "Account created successfully"
+      )
+
+      return true
+    } catch (error) {
+      console.log(error)
+      showToast(
+        getAuthErrorMessage(
+          error,
+          "Error creating account"
+        )
+      )
+      return false
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const emailLogin = async ({
+    email,
+    password,
+  }) => {
+    const trimmedEmail =
+      email.trim()
+
+    if (!trimmedEmail) {
+      showToast("Enter an email")
+      return false
+    }
+
+    if (!password) {
+      showToast("Enter a password")
+      return false
+    }
+
+    setAuthBusy(true)
+
+    try {
+      const credentials =
+        await signInWithEmailAndPassword(
+          auth,
+          trimmedEmail,
+          password
+        )
+
+      setCurrentUser(
+        mapAuthUser(
+          credentials.user
+        )
+      )
+
+      showToast("Signed in")
+      return true
+    } catch (error) {
+      console.log(error)
+      showToast(
+        getAuthErrorMessage(
+          error,
+          "Error signing in"
+        )
+      )
+      return false
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const googleLogin = async () => {
+    setAuthBusy(true)
+
+    try {
+      const credentials =
+        await signInWithPopup(
+          auth,
+          googleProvider
+        )
+
+      setCurrentUser(
+        mapAuthUser(
+          credentials.user
+        )
+      )
+
+      showToast("Signed in")
+      return true
+    } catch (error) {
+      console.log(error)
+      showToast(
+        getAuthErrorMessage(
+          error,
+          "Error signing in with Google"
+        )
+      )
+      return false
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const logout = async () => {
+    setAuthBusy(true)
+
+    try {
+      await signOut(auth)
+      setCurrentUser(null)
+      showToast("Signed out")
+      return true
+    } catch (error) {
+      console.log(error)
+      showToast("Error signing out")
+      return false
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const createTeam = async (
+    teamData
+  ) => {
+    if (!currentUser) {
+      showToast(
+        "Sign in to create a team"
+      )
+      return false
+    }
+
+    const timestamp =
+      new Date().toISOString()
+
+    const nextTeam = {
+      ...teamData,
+      ownerId: currentUser.id,
+      ownerName: currentUser.name,
+      ownerEmail:
+        currentUser.email || "",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }
+
+    try {
+      const docRef = await addDoc(
+        collection(db, "teams"),
+        nextTeam
+      )
+
+      setTeams((previousTeams) =>
+        upsertTeamInList(
+          previousTeams,
+          {
+            id: docRef.id,
+            ...nextTeam,
+          }
+        )
+      )
+
+      showToast(
+        "Team saved successfully"
+      )
+
+      return true
+    } catch (error) {
+      console.log(error)
+      showToast("Error saving team")
+      return false
+    }
+  }
+
+  const updateTeam = async (
+    teamId,
+    teamData
+  ) => {
+    if (!currentUser) {
+      showToast(
+        "Sign in to update a team"
+      )
+      return false
+    }
+
+    const existingTeam =
+      teams.find(
+        (team) => team.id === teamId
+      ) || null
+
+    if (!existingTeam) {
+      showToast("Team not found")
+      return false
+    }
+
+    if (
+      existingTeam.ownerId !==
+      currentUser.id
+    ) {
+      showToast(
+        "You can edit only your own teams"
+      )
+      return false
+    }
+
+    const updatedTeam = {
+      ...existingTeam,
+      ...teamData,
+      ownerName: currentUser.name,
+      ownerEmail:
+        currentUser.email || "",
+      updatedAt:
+        new Date().toISOString(),
+    }
+
+    try {
+      await updateDoc(
+        doc(db, "teams", teamId),
+        {
+          teamName:
+            updatedTeam.teamName,
+          players:
+            updatedTeam.players,
+          captain:
+            updatedTeam.captain,
+          ownerName:
+            updatedTeam.ownerName,
+          ownerEmail:
+            updatedTeam.ownerEmail,
+          updatedAt:
+            updatedTeam.updatedAt,
+        }
+      )
+
+      setTeams((previousTeams) =>
+        upsertTeamInList(
+          previousTeams,
+          updatedTeam
+        )
+      )
+
+      showToast("Team updated")
+      return true
+    } catch (error) {
+      console.log(error)
+      showToast("Error updating team")
+      return false
+    }
+  }
+
+  const deleteTeam = async (
+    teamId
+  ) => {
+    if (!currentUser) {
+      showToast(
+        "Sign in to delete a team"
+      )
+      return false
+    }
+
+    const existingTeam =
+      teams.find(
+        (team) => team.id === teamId
+      ) || null
+
+    if (!existingTeam) {
+      showToast("Team not found")
+      return false
+    }
+
+    if (
+      existingTeam.ownerId !==
+      currentUser.id
+    ) {
+      showToast(
+        "You can delete only your own teams"
+      )
+      return false
+    }
+
+    try {
+      await deleteDoc(
+        doc(db, "teams", teamId)
+      )
+
+      setTeams((previousTeams) =>
+        previousTeams.filter(
+          (team) => team.id !== teamId
+        )
+      )
+
+      showToast("Team deleted")
+      return true
+    } catch (error) {
+      console.log(error)
+      showToast("Error deleting team")
+      return false
+    }
   }
 
   const resetInningsState = () => {
@@ -396,6 +999,10 @@ export default function App() {
       history: snapshot.history,
       batters: snapshot.batters,
       bowlers: snapshot.bowlers,
+      createdById:
+        currentUser?.id || null,
+      createdByName:
+        currentUser?.name || "Guest",
       createdAt:
         new Date().toISOString(),
     }
@@ -545,15 +1152,23 @@ export default function App() {
     ]
 
     const updatedActiveBatters =
-      activeBatters.map((name) =>
-        name ===
+      activeBatters.includes(
         pendingBatterSelection.dismissedName
-          ? nextBatterName
-          : name
       )
+        ? activeBatters.map((name) =>
+            name ===
+            pendingBatterSelection.dismissedName
+              ? nextBatterName
+              : name
+          )
+        : [
+            ...activeBatters,
+            nextBatterName,
+          ]
 
     const nextStriker =
-      pendingBatterSelection.overCompleted
+      pendingBatterSelection.nextStrikerMode ===
+      "survivor"
         ? pendingBatterSelection.survivingBatterName
         : nextBatterName
 
@@ -648,6 +1263,7 @@ export default function App() {
     updatedBatters,
     updatedBowlers,
     updatedExtras,
+    legalDelivery = true,
     pendingBatterData = null,
   }) => {
     const totalBalls =
@@ -713,6 +1329,7 @@ export default function App() {
     }
 
     const overCompleted =
+      legalDelivery &&
       updatedBalls > 0 &&
       updatedBalls % 6 === 0
 
@@ -883,10 +1500,14 @@ export default function App() {
       updatedBatters,
       updatedBowlers,
       updatedExtras,
+      legalDelivery: legalBall,
     })
   }
 
-  const addWicket = () => {
+  const addWicket = (
+    dismissalType = "bowled",
+    options = {}
+  ) => {
     if (
       winner ||
       controlsDisabled ||
@@ -902,16 +1523,55 @@ export default function App() {
       return
     }
 
-    if (freeHit) {
-      setFreeHit(false)
+    const dismissal =
+      getDismissalOption(
+        dismissalType
+      )
+
+    const completedRuns =
+      dismissalType === "run_out"
+        ? Math.max(
+            Number(
+              options.completedRuns
+            ) || 0,
+            0
+          )
+        : 0
+
+    const isNoBallDelivery =
+      pendingNoBall
+
+    const legalBall =
+      !isNoBallDelivery
+
+    if (
+      isNoBallDelivery &&
+      dismissalType !== "run_out"
+    ) {
       showToast(
-        "Cannot give wicket on a free hit"
+        "Only run out can happen on a no ball"
+      )
+      return
+    }
+
+    if (
+      freeHit &&
+      dismissalType !== "run_out"
+    ) {
+      showToast(
+        `${dismissal.label} cannot be given on a free hit`
       )
       return
     }
 
     const updatedBalls =
-      balls + 1
+      balls +
+      (legalBall ? 1 : 0)
+
+    const updatedScore =
+      score +
+      completedRuns +
+      (isNoBallDelivery ? 1 : 0)
 
     const updatedWickets =
       wickets + 1
@@ -926,13 +1586,17 @@ export default function App() {
       )
 
     const overCompleted =
+      legalBall &&
       updatedBalls % 6 === 0
 
     const wicketInfo = {
       wicket: updatedWickets,
-      score,
+      score: updatedScore,
       batter:
         dismissedBatterName,
+      type: dismissal.label,
+      shortType:
+        dismissal.shortLabel,
       over: formatOvers(
         updatedBalls
       ),
@@ -944,7 +1608,13 @@ export default function App() {
         over: Math.floor(
           balls / 6
         ),
-        label: "W",
+        label:
+          dismissalType === "run_out"
+            ? getRunOutHistoryLabel(
+                completedRuns,
+                isNoBallDelivery
+              )
+            : dismissal.shortLabel,
       },
     ]
 
@@ -953,56 +1623,107 @@ export default function App() {
       wicketInfo,
     ]
 
+    const updatedBatters =
+      batters.map((batter) =>
+        batter.name !== strikerName
+          ? batter
+          : {
+              ...batter,
+              runs:
+                batter.runs +
+                completedRuns,
+              balls:
+                batter.balls +
+                (legalBall ? 1 : 0),
+            }
+      )
+
     const updatedBowlers =
       updateBowlerList(
         bowlers,
         currentBowlerName,
         (bowler) => ({
           ...bowler,
+          runs:
+            bowler.runs +
+            completedRuns +
+            (isNoBallDelivery
+              ? 1
+              : 0),
           wickets:
-            bowler.wickets + 1,
+            bowler.wickets +
+            (dismissal.countsForBowler
+              ? 1
+              : 0),
           balls:
-            bowler.balls + 1,
+            bowler.balls +
+            (legalBall ? 1 : 0),
         })
       )
 
     const inningsWillContinue =
       updatedWickets < maxWickets &&
-      updatedBalls <
-        maxOvers * 6
+      (
+        updatedBalls <
+          maxOvers * 6 ||
+        !legalBall
+      )
+
+    const nextStrikerMode =
+      dismissalType === "run_out"
+        ? getRunOutNextStrikerMode(
+            completedRuns,
+            overCompleted
+          )
+        : overCompleted
+          ? "survivor"
+          : "new_batter"
 
     const nextStriker =
-      overCompleted
+      nextStrikerMode ===
+      "survivor"
         ? survivingBatterName
         : ""
 
+    const updatedExtras = extras
+
+    setScore(updatedScore)
     setWickets(updatedWickets)
     setBalls(updatedBalls)
     setHistory(updatedHistory)
     setFallOfWickets(
       updatedFallOfWickets
     )
+    setActiveBatters(
+      survivingBatterName
+        ? [survivingBatterName]
+        : []
+    )
+    setBatters(updatedBatters)
     setBowlers(updatedBowlers)
     setStrikerName(nextStriker)
     setPendingNoBall(false)
-    setFreeHit(false)
+    setFreeHit(
+      isNoBallDelivery
+    )
 
     handlePostDeliveryState({
-      updatedScore: score,
+      updatedScore,
       updatedWickets,
       updatedBalls,
       updatedHistory,
       updatedFallOfWickets,
-      updatedBatters: batters,
+      updatedBatters,
       updatedBowlers,
-      updatedExtras: extras,
+      updatedExtras,
+      legalDelivery: legalBall,
       pendingBatterData:
         inningsWillContinue
           ? {
               dismissedName:
                 dismissedBatterName,
               survivingBatterName,
-              overCompleted,
+              nextStrikerMode,
             }
           : null,
     })
@@ -1069,6 +1790,7 @@ export default function App() {
       updatedBatters: batters,
       updatedBowlers,
       updatedExtras,
+      legalDelivery: false,
     })
   }
 
@@ -1115,7 +1837,9 @@ export default function App() {
     >
       <Toast message={toast} />
 
-      <Navbar />
+      <Navbar
+        currentUser={currentUser}
+      />
 
       <div
         className="
@@ -1128,20 +1852,58 @@ export default function App() {
         <Routes>
           <Route
             path="/"
-            element={<Home />}
+            element={
+              <Home
+                currentUser={currentUser}
+                liveMatch={{
+                  balls,
+                  battingTeamName:
+                    battingTeam?.teamName ||
+                    "",
+                  freeHit,
+                  innings,
+                  inningsReady,
+                  overs,
+                  score,
+                  target,
+                  wickets,
+                  winner,
+                }}
+                matches={matches}
+                teams={teams}
+              />
+            }
           />
 
           <Route
             path="/teams"
             element={
-              <Teams addTeam={addTeam} />
+              <Teams
+                authBusy={authBusy}
+                authReady={authReady}
+                createTeam={createTeam}
+                currentUser={currentUser}
+                deleteTeam={deleteTeam}
+                emailLogin={emailLogin}
+                emailSignup={emailSignup}
+                googleLogin={googleLogin}
+                logout={logout}
+                teams={teams}
+                updateCurrentUserName={
+                  updateCurrentUserName
+                }
+                updateTeam={updateTeam}
+              />
             }
           />
 
           <Route
             path="/history"
             element={
-              <History matches={matches} />
+              <History
+                currentUser={currentUser}
+                matches={matches}
+              />
             }
           />
 

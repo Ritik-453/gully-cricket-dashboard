@@ -15,8 +15,10 @@ export default function MatchSetup({
   pendingBatterSelection,
   pendingBowlerSelection,
   remainingBatters,
+  maxOvers,
   selectBowler,
   selectNextBatter,
+  setMaxOvers,
   setTeamA,
   setTeamB,
   startInnings,
@@ -46,6 +48,36 @@ export default function MatchSetup({
 
   const bowlingPlayers =
     bowlingTeam?.players || []
+
+  const availableTeamA =
+    teams.filter((team) => {
+      if (!teamB) {
+        return true
+      }
+
+      const teamKey =
+        getTeamKey(team)
+
+      return (
+        teamKey !== getTeamKey(teamB) ||
+        teamKey === getTeamKey(teamA)
+      )
+    })
+
+  const availableTeamB =
+    teams.filter((team) => {
+      if (!teamA) {
+        return true
+      }
+
+      const teamKey =
+        getTeamKey(team)
+
+      return (
+        teamKey !== getTeamKey(teamA) ||
+        teamKey === getTeamKey(teamB)
+      )
+    })
 
   const nextBowlerOptions =
     pendingBowlerSelection &&
@@ -116,6 +148,40 @@ export default function MatchSetup({
       </h2>
 
       <div className="space-y-4">
+        <div>
+          <label
+            className="
+              block
+              mb-2
+              text-zinc-300
+            "
+          >
+            Total Overs
+          </label>
+
+          <input
+            type="number"
+            min="1"
+            disabled={matchLocked}
+            value={maxOvers}
+            onChange={(event) =>
+              setMaxOvers(
+                Number(
+                  event.target.value
+                ) || 1
+              )
+            }
+            className="
+              w-full
+              p-3
+              rounded-xl
+              bg-black
+              disabled:opacity-50
+              disabled:cursor-not-allowed
+            "
+          />
+        </div>
+
         <select
           value={getTeamKey(teamA)}
           disabled={matchLocked}
@@ -138,7 +204,7 @@ export default function MatchSetup({
             Select Team A
           </option>
 
-          {teams.map((team) => (
+          {availableTeamA.map((team) => (
             <option
               key={getTeamKey(team)}
               value={getTeamKey(team)}
@@ -170,7 +236,7 @@ export default function MatchSetup({
             Select Team B
           </option>
 
-          {teams.map((team) => (
+          {availableTeamB.map((team) => (
             <option
               key={getTeamKey(team)}
               value={getTeamKey(team)}

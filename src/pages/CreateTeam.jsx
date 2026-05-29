@@ -1,37 +1,58 @@
-import { useState } from "react"
-
-import { db } from "../firebase"
-
 import {
-  collection,
-  addDoc,
-} from "firebase/firestore"
+  useEffect,
+  useState,
+} from "react"
+
+const EMPTY_PLAYERS = [
+  "",
+  "",
+  "",
+  "",
+  "",
+]
+
+const createInitialState = (
+  initialTeam
+) => ({
+  teamName: initialTeam?.teamName || "",
+  players:
+    initialTeam?.players?.length > 0
+      ? [...initialTeam.players]
+      : [...EMPTY_PLAYERS],
+  captain: initialTeam?.captain || "",
+})
 
 export default function CreateTeam({
-  addTeam,
+  initialTeam = null,
+  mode = "create",
+  onCancel,
+  onSubmit,
 }) {
-
   const [teamName, setTeamName] =
     useState("")
 
   const [players, setPlayers] =
-    useState([
-      "",
-      "",
-      "",
-      "",
-      "",
-    ])
+    useState(EMPTY_PLAYERS)
 
   const [captain, setCaptain] =
     useState("")
 
-  // PLAYER INPUT CHANGE
+  const [submitting, setSubmitting] =
+    useState(false)
+
+  useEffect(() => {
+    const nextState =
+      createInitialState(initialTeam)
+
+    setTeamName(nextState.teamName)
+    setPlayers(nextState.players)
+    setCaptain(nextState.captain)
+  }, [initialTeam])
+
   const handlePlayerChange = (
     index,
     value
   ) => {
-
     const updatedPlayers = [...players]
 
     updatedPlayers[index] = value
@@ -39,50 +60,66 @@ export default function CreateTeam({
     setPlayers(updatedPlayers)
   }
 
-  // ADD PLAYER
   const addPlayerField = () => {
-
     if (players.length >= 15) {
       return
     }
 
-    setPlayers(prev => [
-      ...prev,
+    setPlayers((previousPlayers) => [
+      ...previousPlayers,
       "",
     ])
   }
 
-  // REMOVE PLAYER
   const removePlayerField = (
     index
   ) => {
-
-    // MINIMUM 2 PLAYERS
     if (players.length <= 2) {
       return
     }
 
     const updatedPlayers =
       players.filter(
-        (_, i) => i !== index
+        (_, playerIndex) =>
+          playerIndex !== index
       )
 
     setPlayers(updatedPlayers)
 
-    // RESET CAPTAIN IF REMOVED
-    if (
-      captain === players[index]
-    ) {
+    if (captain === players[index]) {
       setCaptain("")
     }
   }
 
-  // CREATE TEAM
-  const createTeam = async () => {
+  const resetForm = () => {
+    const nextState =
+      createInitialState(null)
 
-    // VALIDATION
-    if (!teamName) {
+    setTeamName(nextState.teamName)
+    setPlayers(nextState.players)
+    setCaptain(nextState.captain)
+  }
+
+  const handleSubmit = async () => {
+    const trimmedTeamName =
+      teamName.trim()
+
+    const filteredPlayers =
+      players
+        .map((player) =>
+          player.trim()
+        )
+        .filter(Boolean)
+
+    if (!trimmedTeamName) {
       alert("Enter Team Name")
+      return
+    }
+
+    if (filteredPlayers.length < 2) {
+      alert(
+        "Add at least 2 players"
+      )
       return
     }
 
@@ -91,97 +128,94 @@ export default function CreateTeam({
       return
     }
 
-    const filteredPlayers =
-      players.filter(
-        player =>
-          player.trim() !== ""
-      )
+    setSubmitting(true)
 
-    if (
-      filteredPlayers.length < 2
-    ) {
+    const isSaved = await onSubmit({
+      teamName: trimmedTeamName,
+      players: filteredPlayers,
+      captain,
+    })
 
-      alert(
-        "Add at least 2 players"
-      )
+    setSubmitting(false)
 
+    if (!isSaved) {
       return
     }
 
-    const team = {
-
-      teamName,
-
-      players: filteredPlayers,
-
-      captain,
-
-      createdAt:
-        new Date().toISOString(),
+    if (mode === "create") {
+      resetForm()
+      return
     }
 
-    try {
-
-      // SAVE TO FIREBASE
-      await addDoc(
-        collection(db, "teams"),
-        team
-      )
-
-      // SAVE TO LOCAL STATE
-      addTeam(team)
-
-      alert(
-        "Team Saved Successfully!"
-      )
-
-      // RESET FORM
-      setTeamName("")
-
-      setPlayers([
-        "",
-        "",
-        "",
-        "",
-        "",
-      ])
-
-      setCaptain("")
-
-    } catch (error) {
-
-      console.log(error)
-
-      alert(
-        "Error Saving Team"
-      )
-    }
+    onCancel?.()
   }
 
+  const title =
+    mode === "edit"
+      ? "Edit Team"
+      : "Create Team"
+
+  const submitLabel =
+    mode === "edit"
+      ? "Update Team"
+      : "Create Team"
+
+  const captainOptions = players
+    .map((player) => player.trim())
+    .filter(Boolean)
+
   return (
-    <div className="
-      bg-zinc-900
-      p-6
-      rounded-2xl
-      mt-6
-    ">
+    <div
+      className="
+        bg-zinc-900
+        p-6
+        rounded-2xl
+        mt-6
+      "
+    >
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+          gap-3
+          mb-6
+        "
+      >
+        <h2
+          className="
+            text-2xl
+            font-bold
+          "
+        >
+          {title}
+        </h2>
 
-      <h2 className="
-        text-2xl
-        font-bold
-        mb-6
-      ">
-        Create Team
-      </h2>
+        {mode === "edit" && (
+          <button
+            onClick={onCancel}
+            className="
+              rounded-xl
+              bg-zinc-800
+              px-4
+              py-2
+              font-semibold
+              hover:bg-zinc-700
+              transition-all
+            "
+          >
+            Cancel
+          </button>
+        )}
+      </div>
 
-      {/* TEAM NAME */}
       <input
         type="text"
         placeholder="Team Name"
         value={teamName}
-        onChange={(e) =>
+        onChange={(event) =>
           setTeamName(
-            e.target.value
+            event.target.value
           )
         }
         className="
@@ -193,15 +227,9 @@ export default function CreateTeam({
         "
       />
 
-      {/* PLAYERS */}
       <div className="space-y-3">
-
-        {
-          players.map((
-            player,
-            index
-          ) => (
-
+        {players.map(
+          (player, index) => (
             <div
               key={index}
               className="
@@ -209,15 +237,14 @@ export default function CreateTeam({
                 gap-2
               "
             >
-
               <input
                 type="text"
                 placeholder={`Player ${index + 1}`}
                 value={player}
-                onChange={(e) =>
+                onChange={(event) =>
                   handlePlayerChange(
                     index,
-                    e.target.value
+                    event.target.value
                   )
                 }
                 className="
@@ -243,14 +270,11 @@ export default function CreateTeam({
               >
                 X
               </button>
-
             </div>
-          ))
-        }
-
+          )
+        )}
       </div>
 
-      {/* ADD PLAYER BUTTON */}
       <button
         onClick={addPlayerField}
         className="
@@ -267,12 +291,11 @@ export default function CreateTeam({
         + Add Player
       </button>
 
-      {/* CAPTAIN */}
       <select
         value={captain}
-        onChange={(e) =>
+        onChange={(event) =>
           setCaptain(
-            e.target.value
+            event.target.value
           )
         }
         className="
@@ -283,36 +306,25 @@ export default function CreateTeam({
           mt-4
         "
       >
-
         <option value="">
           Select Captain
         </option>
 
-        {
-          players.map((
-            player,
-            index
-          ) => (
-
+        {captainOptions.map(
+          (player) => (
             <option
-              key={index}
+              key={player}
               value={player}
             >
-
-              {
-                player ||
-                `Player ${index + 1}`
-              }
-
+              {player}
             </option>
-          ))
-        }
-
+          )
+        )}
       </select>
 
-      {/* CREATE BUTTON */}
       <button
-        onClick={createTeam}
+        onClick={handleSubmit}
+        disabled={submitting}
         className="
           bg-green-600
           hover:bg-green-700
@@ -323,11 +335,14 @@ export default function CreateTeam({
           mt-6
           w-full
           font-bold
+          disabled:opacity-50
+          disabled:cursor-not-allowed
         "
       >
-        Create Team
+        {submitting
+          ? "Saving..."
+          : submitLabel}
       </button>
-
     </div>
   )
 }

@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isTeamOwner() {
+      return isSignedIn() &&
+        resource.data.ownerId == request.auth.uid;
+    }
+
+    function validTeamPayload() {
+      return request.resource.data.teamName is string &&
+        request.resource.data.teamName.size() > 0 &&
+        request.resource.data.captain is string &&
+        request.resource.data.captain.size() > 0 &&
+        request.resource.data.players is list &&
+        request.resource.data.players.size() >= 2 &&
+        request.resource.data.ownerId == request.auth.uid;
+    }
+
+    function validMatchPayload() {
+      return request.resource.data.teamA is string &&
+        request.resource.data.teamB is string &&
+        request.resource.data.score is string &&
+        request.resource.data.winner is string &&
+        (
+          (
+            request.auth != null &&
+            request.resource.data.createdById == request.auth.uid
+          ) ||
+          (
+            request.auth == null &&
+            request.resource.data.createdById == null
+          )
+        );
+    }
+
+    match /teams/{teamId} {
+      allow read: if true;
+
+      allow create: if isSignedIn() &&
+        validTeamPayload();
+
+      allow update: if isTeamOwner() &&
+        validTeamPayload() &&
+        request.resource.data.ownerId == resource.data.ownerId;
+
+      allow delete: if isTeamOwner();
+    }
+
+    match /matches/{matchId} {
+      allow read: if true;
+      allow create: if validMatchPayload();
+      allow update, delete: if false;
+    }
+  }
+}
