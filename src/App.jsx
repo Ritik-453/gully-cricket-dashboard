@@ -30,6 +30,7 @@ import Home from "./pages/Home"
 import Teams from "./pages/Teams"
 import History from "./pages/History"
 import LiveMatch from "./pages/LiveMatch"
+import Guide from "./pages/Guide"
 
 const INITIAL_EXTRAS = {
   wides: 0,
@@ -1889,14 +1890,24 @@ export default function App() {
   const overs =
     formatOvers(balls)
 
+  const liveMatchSummary = {
+    balls,
+    battingTeamName:
+      battingTeam?.teamName || "",
+    freeHit,
+    innings,
+    inningsReady,
+    overs,
+    score,
+    target,
+    wickets,
+    winner,
+  }
+
   return (
     <div
       className="
         min-h-screen
-        bg-gradient-to-br
-        from-black
-        via-zinc-900
-        to-zinc-950
         text-white
       "
     >
@@ -1904,13 +1915,20 @@ export default function App() {
 
       <Navbar
         currentUser={currentUser}
+        liveMatch={liveMatchSummary}
+        matchesCount={matches.length}
+        teamsCount={teams.length}
       />
 
       <div
         className="
-          p-3
-          md:p-6
-          max-w-4xl
+          mx-auto
+          max-w-7xl
+          px-4
+          pb-28
+          pt-6
+          md:px-6
+          md:pb-10
           mx-auto
         "
       >
@@ -1920,20 +1938,7 @@ export default function App() {
             element={
               <Home
                 currentUser={currentUser}
-                liveMatch={{
-                  balls,
-                  battingTeamName:
-                    battingTeam?.teamName ||
-                    "",
-                  freeHit,
-                  innings,
-                  inningsReady,
-                  overs,
-                  score,
-                  target,
-                  wickets,
-                  winner,
-                }}
+                liveMatch={liveMatchSummary}
                 matches={matches}
                 teams={teams}
               />
@@ -2057,6 +2062,11 @@ export default function App() {
                 }
               />
             }
+          />
+
+          <Route
+            path="/guide"
+            element={<Guide />}
           />
         </Routes>
       </div>

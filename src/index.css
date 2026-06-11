@@ -1,1 +1,77 @@
 @import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  font-family:
+    "Trebuchet MS",
+    "Segoe UI",
+    sans-serif;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(22, 163, 74, 0.18),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(14, 165, 233, 0.16),
+      transparent 24%
+    ),
+    linear-gradient(
+      145deg,
+      #020617 0%,
+      #0b1120 45%,
+      #111827 100%
+    );
+  --panel-bg:
+    rgba(9, 14, 28, 0.82);
+  --panel-border:
+    rgba(148, 163, 184, 0.14);
+  --panel-soft:
+    rgba(15, 23, 42, 0.72);
+  --text-soft:
+    #94a3b8;
+  --accent-green:
+    #34d399;
+  --accent-blue:
+    #38bdf8;
+  --accent-amber:
+    #fbbf24;
+}
+
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+  background: #020617;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(22, 163, 74, 0.18),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(14, 165, 233, 0.16),
+      transparent 24%
+    ),
+    linear-gradient(
+      145deg,
+      #020617 0%,
+      #0b1120 45%,
+      #111827 100%
+    );
+  color: #f8fafc;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(52, 211, 153, 0.34);
+  color: #f8fafc;
+}
