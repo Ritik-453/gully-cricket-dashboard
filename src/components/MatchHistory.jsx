@@ -5,6 +5,7 @@ import BattingScorecard from "./BattingScorecard"
 import BowlingScorecard from "./BowlingScorecard"
 import BallHistory from "./BallHistory"
 import FallOfWickets from "./FallOfWickets"
+import MatchOverview from "./MatchOverview"
 
 const DEFAULT_EXTRAS = {
   wides: 0,
@@ -271,6 +272,31 @@ export default function MatchHistory({
                             }
                           />
                         </div>
+
+                        <MatchOverview
+                          title="Saved Match Insights"
+                          match={{
+                            batters:
+                              match.batters ||
+                              [],
+                            bowlers:
+                              match.bowlers ||
+                              [],
+                            extras:
+                              match.extras ||
+                              DEFAULT_EXTRAS,
+                            fallOfWickets:
+                              match.fallOfWickets ||
+                              [],
+                            history:
+                              match.history ||
+                              [],
+                            overs:
+                              match.overs,
+                            score:
+                              match.score,
+                          }}
+                        />
                       </>
                     ) : (
                       <div className="rounded-2xl bg-zinc-800 p-4 text-zinc-300">

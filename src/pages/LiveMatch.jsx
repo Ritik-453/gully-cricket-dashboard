@@ -6,6 +6,7 @@ import BallHistory from "../components/BallHistory"
 import FallOfWickets from "../components/FallOfWickets"
 import MatchSetup from "../components/MatchSetup"
 import ExtrasCard from "../components/ExtrasCard"
+import MatchOverview from "../components/MatchOverview"
 
 export default function LiveMatch(props) {
   return (
@@ -108,6 +109,23 @@ export default function LiveMatch(props) {
           }
         />
       </div>
+
+      <MatchOverview
+        match={{
+          activeBatters:
+            props.activeBatters,
+          batters: props.batters,
+          balls: props.balls,
+          bowlers: props.bowlers,
+          extras: props.extras,
+          fallOfWickets:
+            props.fallOfWickets,
+          history: props.history,
+          overs: props.overs,
+          score: props.score,
+          wickets: props.wickets,
+        }}
+      />
 
       <div className="mt-8">
         <MatchSetup
