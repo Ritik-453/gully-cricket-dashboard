@@ -15,6 +15,9 @@ export default function BallHistory({
       (wicketCode) =>
         label === wicketCode ||
         label.startsWith(
+          `${wicketCode}-`
+        ) ||
+        label.startsWith(
           `${wicketCode}(`
         )
     )

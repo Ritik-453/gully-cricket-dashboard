@@ -1,4 +1,7 @@
-import { useState } from "react"
+import {
+  useEffect,
+  useState,
+} from "react"
 
 const DISMISSAL_OPTIONS = [
   {
@@ -32,6 +35,7 @@ const RUN_OUT_OPTIONS = [
 ]
 
 export default function MatchControls({
+  activeBatters,
   addNoBall,
   addRuns,
   addWide,
@@ -40,6 +44,7 @@ export default function MatchControls({
   freeHit,
   pendingNoBall,
   statusText,
+  strikerName,
 }) {
   const [
     selectedDismissal,
@@ -51,6 +56,11 @@ export default function MatchControls({
     setRunOutCompletedRuns,
   ] = useState(0)
 
+  const [
+    runOutDismissedBatter,
+    setRunOutDismissedBatter,
+  ] = useState("striker")
+
   const selectedDismissalOption =
     DISMISSAL_OPTIONS.find(
       (option) =>
@@ -60,6 +70,27 @@ export default function MatchControls({
 
   const isRunOut =
     selectedDismissal === "run_out"
+
+  const nonStrikerName =
+    activeBatters.find(
+      (name) =>
+        name !== strikerName
+    ) || ""
+
+  useEffect(() => {
+    if (
+      !nonStrikerName &&
+      runOutDismissedBatter ===
+        "non_striker"
+    ) {
+      setRunOutDismissedBatter(
+        "striker"
+      )
+    }
+  }, [
+    nonStrikerName,
+    runOutDismissedBatter,
+  ])
 
   const wicketDisabled =
     disabled ||
@@ -191,6 +222,85 @@ export default function MatchControls({
             "
           >
             <div className="text-sm text-zinc-400">
+              Who is out?
+            </div>
+
+            <div
+              className={`
+                grid
+                gap-2
+                ${
+                  nonStrikerName
+                    ? "grid-cols-2"
+                    : "grid-cols-1"
+                }
+              `}
+            >
+              <button
+                onClick={() =>
+                  setRunOutDismissedBatter(
+                    "striker"
+                  )
+                }
+                className={`
+                  rounded-xl
+                  px-3
+                  py-3
+                  text-left
+                  transition-all
+                  ${
+                    runOutDismissedBatter ===
+                    "striker"
+                      ? "bg-red-600 text-white"
+                      : "bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
+                  }
+                `}
+              >
+                <div className="font-bold">
+                  {strikerName ||
+                    "Current striker"}
+                </div>
+
+                <div className="text-xs uppercase tracking-wide opacity-80">
+                  Striker
+                </div>
+              </button>
+
+              {nonStrikerName && (
+                <button
+                  onClick={() =>
+                    setRunOutDismissedBatter(
+                      "non_striker"
+                    )
+                  }
+                  className={`
+                    rounded-xl
+                    px-3
+                    py-3
+                    text-left
+                    transition-all
+                    ${
+                      runOutDismissedBatter ===
+                      "non_striker"
+                        ? "bg-red-600 text-white"
+                        : "bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
+                    }
+                  `}
+                >
+                  <div className="font-bold">
+                    {
+                      nonStrikerName
+                    }
+                  </div>
+
+                  <div className="text-xs uppercase tracking-wide opacity-80">
+                    Non-striker
+                  </div>
+                </button>
+              )}
+            </div>
+
+            <div className="text-sm text-zinc-400">
               Completed runs before the wicket
             </div>
 
@@ -226,7 +336,7 @@ export default function MatchControls({
             </div>
 
             <div className="text-xs leading-6 text-zinc-400">
-              Use this when a batter is run out while attempting the next run. Example: run out on the 2nd run means only 1 completed run should be selected.
+              Choose the dismissed batter, then set the runs already completed before the wicket. Example: run out on the 2nd run means only 1 completed run should be selected.
             </div>
           </div>
         )}
@@ -296,18 +406,20 @@ export default function MatchControls({
               {
                 completedRuns:
                   runOutCompletedRuns,
+                dismissedBatter:
+                  runOutDismissedBatter,
               }
             )
           }
           disabled={wicketDisabled}
           className={`${buttonStyle} bg-red-600 col-span-2 md:col-span-4`}
         >
-          WICKET •{" "}
+          WICKET -{" "}
           {
             selectedDismissalOption.label
           }
           {isRunOut &&
-            ` • ${runOutCompletedRuns} run${runOutCompletedRuns === 1 ? "" : "s"} completed`}
+            ` - ${runOutDismissedBatter === "non_striker" ? "non-striker" : "striker"} out - ${runOutCompletedRuns} run${runOutCompletedRuns === 1 ? "" : "s"} completed`}
         </button>
       </div>
     </div>

@@ -66,6 +66,9 @@ export default function LiveMatch(props) {
 
       <div className="mt-8">
         <MatchControls
+          activeBatters={
+            props.activeBatters
+          }
           addNoBall={props.addNoBall}
           addRuns={props.addRuns}
           addWide={props.addWide}
@@ -79,6 +82,9 @@ export default function LiveMatch(props) {
           }
           statusText={
             props.controlsStatus
+          }
+          strikerName={
+            props.strikerName
           }
         />
       </div>

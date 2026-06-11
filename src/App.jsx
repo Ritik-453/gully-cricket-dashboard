@@ -169,36 +169,80 @@ const getDismissalOption = (
 
 const getRunOutHistoryLabel = (
   completedRuns,
-  isNoBallDelivery
+  isNoBallDelivery,
+  dismissedRole
 ) => {
+  const roleLabel =
+    dismissedRole === "non_striker"
+      ? "-NS"
+      : ""
+
   const runLabel =
     completedRuns > 0
-      ? `RO(${completedRuns})`
-      : "RO"
+      ? `RO${roleLabel}(${completedRuns})`
+      : `RO${roleLabel}`
 
   if (isNoBallDelivery) {
-    return completedRuns > 0
-      ? `Nb+${runLabel}`
-      : "Nb+RO"
+    return `Nb+${runLabel}`
   }
 
   return runLabel
 }
 
+const getRunOutParticipants = (
+  activeBatters,
+  strikerName,
+  dismissedRole
+) => {
+  const nonStrikerName =
+    getOtherActiveBatter(
+      activeBatters,
+      strikerName
+    )
+
+  if (
+    dismissedRole ===
+      "non_striker" &&
+    nonStrikerName
+  ) {
+    return {
+      dismissedBatterName:
+        nonStrikerName,
+      survivingBatterName:
+        strikerName,
+    }
+  }
+
+  return {
+    dismissedBatterName:
+      strikerName,
+    survivingBatterName:
+      nonStrikerName,
+  }
+}
+
 const getRunOutNextStrikerMode = (
   completedRuns,
+  dismissedRole,
   overCompleted
 ) => {
-  const oddRuns =
+  const completedRunsAreOdd =
     completedRuns % 2 === 1
 
+  const survivorAtStrikerEnd =
+    completedRunsAreOdd
+      ? dismissedRole ===
+        "non_striker"
+      : dismissedRole ===
+        "striker"
+
   if (overCompleted) {
-    return oddRuns
+    return survivorAtStrikerEnd
       ? "new_batter"
       : "survivor"
   }
 
-  return oddRuns
+  return survivorAtStrikerEnd
     ? "survivor"
     : "new_batter"
 }
@@ -1516,17 +1560,17 @@ export default function App() {
       return
     }
 
-    if (pendingNoBall) {
-      showToast(
-        "Complete the no ball outcome first"
-      )
-      return
-    }
-
     const dismissal =
       getDismissalOption(
         dismissalType
       )
+
+    const dismissedRole =
+      dismissalType === "run_out" &&
+      options.dismissedBatter ===
+        "non_striker"
+        ? "non_striker"
+        : "striker"
 
     const completedRuns =
       dismissalType === "run_out"
@@ -1576,27 +1620,46 @@ export default function App() {
     const updatedWickets =
       wickets + 1
 
-    const dismissedBatterName =
-      strikerName
-
-    const survivingBatterName =
-      getOtherActiveBatter(
-        activeBatters,
-        strikerName
-      )
+    const {
+      dismissedBatterName,
+      survivingBatterName,
+    } =
+      dismissalType === "run_out"
+        ? getRunOutParticipants(
+            activeBatters,
+            strikerName,
+            dismissedRole
+          )
+        : {
+            dismissedBatterName:
+              strikerName,
+            survivingBatterName:
+              getOtherActiveBatter(
+                activeBatters,
+                strikerName
+              ),
+          }
 
     const overCompleted =
       legalBall &&
       updatedBalls % 6 === 0
+
+    const dismissalLabel =
+      dismissalType === "run_out" &&
+      dismissedRole ===
+        "non_striker"
+        ? "Run Out (Non-striker)"
+        : dismissal.label
 
     const wicketInfo = {
       wicket: updatedWickets,
       score: updatedScore,
       batter:
         dismissedBatterName,
-      type: dismissal.label,
+      type: dismissalLabel,
       shortType:
         dismissal.shortLabel,
+      dismissedRole,
       over: formatOvers(
         updatedBalls
       ),
@@ -1612,7 +1675,8 @@ export default function App() {
           dismissalType === "run_out"
             ? getRunOutHistoryLabel(
                 completedRuns,
-                isNoBallDelivery
+                isNoBallDelivery,
+                dismissedRole
               )
             : dismissal.shortLabel,
       },
@@ -1673,6 +1737,7 @@ export default function App() {
       dismissalType === "run_out"
         ? getRunOutNextStrikerMode(
             completedRuns,
+            dismissedRole,
             overCompleted
           )
         : overCompleted
@@ -1817,7 +1882,7 @@ export default function App() {
     }))
 
     showToast(
-      "No ball. Record the bat runs now."
+      "No ball. Record the bat runs or a run out now."
     )
   }
 
