@@ -156,6 +156,7 @@ export default function BallHistory({
                         justify-center
                         font-bold
                         text-sm
+                        animate-pop-in
                         ${getBallStyle(ball)}
                       `}
                     >

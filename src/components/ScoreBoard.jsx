@@ -1,3 +1,43 @@
+const WICKET_CODES = [
+  "W",
+  "B",
+  "C",
+  "LBW",
+  "ST",
+  "RO",
+]
+
+const isWicketLabel = (label) =>
+  WICKET_CODES.some(
+    (code) =>
+      label === code ||
+      label.startsWith(`${code}-`) ||
+      label.startsWith(`${code}(`)
+  )
+
+const getFlashClass = (label) => {
+  if (!label) return null
+
+  const text = String(label)
+
+  if (text === "6")
+    return "bg-emerald-400/25"
+
+  if (text === "4")
+    return "bg-sky-400/25"
+
+  if (isWicketLabel(text))
+    return "bg-red-500/25"
+
+  if (text === "Wd")
+    return "bg-yellow-300/20"
+
+  if (text.startsWith("Nb"))
+    return "bg-purple-400/20"
+
+  return null
+}
+
 export default function ScoreBoard({
   score,
   wickets,
@@ -9,6 +49,7 @@ export default function ScoreBoard({
   winner,
   balls,
   maxOvers,
+  history = [],
 }) {
 
   // CURRENT RUN RATE
@@ -42,9 +83,29 @@ export default function ScoreBoard({
         ).toFixed(2)
       : "0.00"
 
+  const lastEntry =
+    history.length > 0
+      ? history[history.length - 1]
+      : null
+
+  const lastLabel = lastEntry
+    ? typeof lastEntry === "object"
+      ? lastEntry.label
+      : lastEntry
+    : null
+
+  const flashClass =
+    getFlashClass(lastLabel)
+
+  const isLastBallWicket =
+    lastLabel &&
+    isWicketLabel(String(lastLabel))
+
   return (
     <div
       className="
+        relative
+        overflow-hidden
         bg-zinc-800
         p-4
         md:p-6
@@ -55,6 +116,22 @@ export default function ScoreBoard({
         z-30
       "
     >
+
+      {flashClass && (
+        <div
+          key={history.length}
+          className={`
+            pointer-events-none
+            absolute
+            inset-0
+            z-0
+            ${flashClass}
+            animate-flash-fade
+          `}
+        />
+      )}
+
+      <div className="relative z-10">
 
       {/* TEAM NAME */}
       <h2 className="
@@ -69,13 +146,22 @@ export default function ScoreBoard({
       </h2>
 
       {/* SCORE */}
-      <div className="
-        mt-3
-        md:mt-5
-        text-4xl
-        md:text-7xl
-        font-extrabold
-      ">
+      <div
+        key={`${score}-${wickets}`}
+        className={`
+          mt-3
+          md:mt-5
+          text-4xl
+          md:text-7xl
+          font-extrabold
+          animate-score-pop
+          ${
+            isLastBallWicket
+              ? "animate-shake"
+              : ""
+          }
+        `}
+      >
 
         {score}/{wickets}
 
@@ -259,6 +345,8 @@ export default function ScoreBoard({
           </div>
         )
       }
+
+      </div>
 
     </div>
   )

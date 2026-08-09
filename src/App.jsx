@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Routes, Route } from "react-router-dom"
 import {
   createUserWithEmailAndPassword,
@@ -25,6 +25,7 @@ import {
 
 import Navbar from "./components/Navbar"
 import Toast from "./components/Toast"
+import Confetti from "./components/Confetti"
 
 import Home from "./pages/Home"
 import Teams from "./pages/Teams"
@@ -311,7 +312,22 @@ export default function App() {
     useState("")
 
   const [toast, setToast] =
-    useState("")
+    useState(null)
+
+  const [
+    celebration,
+    setCelebration,
+  ] = useState(null)
+
+  const milestoneRef = useRef({})
+
+  useEffect(() => {
+    if (!winner) return
+
+    triggerCelebration(
+      `🏆 ${winner}`
+    )
+  }, [winner])
 
   const [
     pendingNoBall,
@@ -346,6 +362,46 @@ export default function App() {
 
   const [batters, setBatters] =
     useState([])
+
+  useEffect(() => {
+    if (
+      !batters ||
+      batters.length === 0
+    )
+      return
+
+    batters.forEach((batter) => {
+      const tier =
+        batter.runs >= 100
+          ? 100
+          : batter.runs >= 50
+            ? 50
+            : 0
+
+      const previousTier =
+        milestoneRef.current[
+          batter.name
+        ] || 0
+
+      if (tier > previousTier) {
+        milestoneRef.current[
+          batter.name
+        ] = tier
+
+        const label =
+          tier === 100
+            ? `💯 ${batter.name} brings up the century!`
+            : `🎉 ${batter.name} brings up the fifty!`
+
+        showToast(
+          label,
+          "celebrate"
+        )
+
+        triggerCelebration(label)
+      }
+    })
+  }, [batters])
 
   const [
     activeBatters,
@@ -593,12 +649,38 @@ export default function App() {
     })
   }, [teams, matchLocked])
 
-  const showToast = (message) => {
-    setToast(message)
+  const showToast = (
+    message,
+    tone = "info"
+  ) => {
+    setToast({
+      id: Date.now() +
+        Math.random(),
+      message,
+      tone,
+    })
 
     setTimeout(() => {
-      setToast("")
+      setToast((current) =>
+        current?.message === message
+          ? null
+          : current
+      )
     }, 2500)
+  }
+
+  const triggerCelebration = (
+    label
+  ) => {
+    setCelebration({
+      id: Date.now() +
+        Math.random(),
+      label,
+    })
+
+    setTimeout(() => {
+      setCelebration(null)
+    }, 2600)
   }
 
   const updateCurrentUserName = async (
@@ -1020,6 +1102,7 @@ export default function App() {
     setInningsReady(false)
     setPendingBatterSelection(null)
     setPendingBowlerSelection(null)
+    milestoneRef.current = {}
   }
 
   const saveMatch = async (
@@ -1078,7 +1161,10 @@ export default function App() {
   ) => {
     setWinner(result)
     saveMatch(result, snapshot)
-    showToast("Match finished")
+    showToast(
+      `🏆 ${result}`,
+      "celebrate"
+    )
   }
 
   const prepareNextInnings = (
@@ -1911,7 +1997,13 @@ export default function App() {
         text-white
       "
     >
-      <Toast message={toast} />
+      <Toast toast={toast} />
+
+      {celebration && (
+        <Confetti
+          key={celebration.id}
+        />
+      )}
 
       <Navbar
         currentUser={currentUser}

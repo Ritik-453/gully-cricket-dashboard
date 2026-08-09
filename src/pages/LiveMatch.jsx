@@ -7,6 +7,7 @@ import FallOfWickets from "../components/FallOfWickets"
 import MatchSetup from "../components/MatchSetup"
 import ExtrasCard from "../components/ExtrasCard"
 import MatchOverview from "../components/MatchOverview"
+import BallFeedback from "../components/BallFeedback"
 
 export default function LiveMatch(props) {
   return (
@@ -18,6 +19,10 @@ export default function LiveMatch(props) {
         mx-auto
       "
     >
+      <BallFeedback
+        history={props.history}
+      />
+
       <div
         className="
           order-2
@@ -33,6 +38,7 @@ export default function LiveMatch(props) {
           <ScoreBoard
             balls={props.balls}
             freeHit={props.freeHit}
+            history={props.history}
             innings={props.innings}
             maxOvers={props.maxOvers}
             overs={props.overs}

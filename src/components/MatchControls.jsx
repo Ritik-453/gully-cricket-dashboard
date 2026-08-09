@@ -106,9 +106,16 @@ export default function MatchControls({
     font-bold
     text-lg
     transition-all
-    active:scale-95
+    duration-150
+    hover:brightness-110
+    hover:-translate-y-0.5
+    active:translate-y-0
+    active:scale-90
+    active:brightness-125
     disabled:opacity-40
     disabled:cursor-not-allowed
+    disabled:hover:translate-y-0
+    disabled:hover:brightness-100
     md:min-h-0
     md:p-5
     md:rounded-2xl
@@ -207,6 +214,7 @@ export default function MatchControls({
                   text-sm
                   font-semibold
                   transition-all
+                  active:scale-95
                   ${
                     selectedDismissal ===
                     option.value
@@ -257,6 +265,7 @@ export default function MatchControls({
                   py-3
                   text-left
                   transition-all
+                  active:scale-95
                   ${
                     runOutDismissedBatter ===
                     "striker"
@@ -288,6 +297,7 @@ export default function MatchControls({
                     py-3
                     text-left
                     transition-all
+                    active:scale-95
                     ${
                       runOutDismissedBatter ===
                       "non_striker"
@@ -330,6 +340,7 @@ export default function MatchControls({
                       text-sm
                       font-bold
                       transition-all
+                      active:scale-95
                       ${
                         runOutCompletedRuns ===
                         runs

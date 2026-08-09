@@ -45,6 +45,7 @@ export default function FallOfWickets({
                   justify-between
                   items-center
                   gap-4
+                  animate-slide-in-row
                 "
               >
                 <div className="space-y-2">
