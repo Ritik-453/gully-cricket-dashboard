@@ -100,17 +100,23 @@ export default function MatchControls({
     )
 
   const buttonStyle = `
-    p-5
-    rounded-2xl
+    min-h-[3.25rem]
+    p-3
+    rounded-xl
     font-bold
-    text-xl
+    text-lg
     transition-all
+    active:scale-95
     disabled:opacity-40
     disabled:cursor-not-allowed
+    md:min-h-0
+    md:p-5
+    md:rounded-2xl
+    md:text-xl
   `
 
   return (
-    <div className="mt-6 space-y-4">
+    <div className="mt-4 space-y-3 md:mt-6 md:space-y-4">
       {statusText && (
         <div
           className="
@@ -118,9 +124,10 @@ export default function MatchControls({
             border
             border-zinc-800
             bg-zinc-900
-            p-4
+            p-3
             text-sm
             text-zinc-300
+            md:p-4
           "
         >
           {statusText}
@@ -133,8 +140,10 @@ export default function MatchControls({
           border
           border-zinc-800
           bg-zinc-900
-          p-4
-          space-y-4
+          p-3
+          space-y-3
+          md:p-4
+          md:space-y-4
         "
       >
         <div
@@ -345,9 +354,10 @@ export default function MatchControls({
       <div
         className="
           grid
-          grid-cols-2
+          grid-cols-3
           md:grid-cols-4
-          gap-4
+          gap-2
+          md:gap-4
         "
       >
         {[0, 1, 2, 3].map((runs) => (
@@ -412,7 +422,7 @@ export default function MatchControls({
             )
           }
           disabled={wicketDisabled}
-          className={`${buttonStyle} bg-red-600 col-span-2 md:col-span-4`}
+          className={`${buttonStyle} bg-red-600 col-span-3 md:col-span-4`}
         >
           WICKET -{" "}
           {

@@ -89,52 +89,60 @@ export default function Navbar({
             flex
             max-w-7xl
             flex-col
-            gap-4
-            px-4
-            py-4
+            gap-3
+            px-3
+            py-3
+            md:gap-4
             md:px-6
+            md:py-4
           "
         >
           <div
             className="
               flex
               flex-col
-              gap-4
+              gap-3
               lg:flex-row
               lg:items-center
               lg:justify-between
+              lg:gap-4
             "
           >
-            <div className="flex items-start gap-4">
+            <div className="flex items-center gap-3 md:items-start md:gap-4">
               <div
                 className="
                   flex
-                  h-12
-                  w-12
+                  h-10
+                  w-10
+                  shrink-0
                   items-center
                   justify-center
-                  rounded-2xl
+                  rounded-xl
                   border
                   border-emerald-400/20
                   bg-emerald-500/10
-                  text-lg
+                  text-base
                   font-black
                   text-emerald-300
+                  md:h-12
+                  md:w-12
+                  md:rounded-2xl
+                  md:text-lg
                 "
               >
                 GC
               </div>
 
-              <div className="space-y-1">
-                <div className="text-[11px] font-black uppercase tracking-[0.35em] text-emerald-300">
+              <div className="min-w-0 space-y-0.5 md:space-y-1">
+                <div className="hidden text-[11px] font-black uppercase tracking-[0.35em] text-emerald-300 md:block">
                   Match Command
                 </div>
 
-                <div className="text-2xl font-black tracking-tight">
+                <div className="truncate text-lg font-black tracking-tight md:text-2xl">
                   Gully Cricket Dashboard
                 </div>
 
-                <div className="text-sm text-slate-400">
+                <div className="truncate text-xs text-slate-400 md:text-sm">
                   {currentUser
                     ? `Signed in as ${currentUser.name}`
                     : "Guest mode active"}
@@ -145,52 +153,53 @@ export default function Navbar({
             <div
               className="
                 grid
-                gap-3
-                sm:grid-cols-3
+                grid-cols-3
+                gap-2
+                md:gap-3
               "
             >
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
-                  Match State
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2 md:rounded-2xl md:px-4 md:py-3">
+                <div className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
+                  Match
                 </div>
 
-                <div className="mt-2 text-sm font-bold text-white">
+                <div className="mt-1 truncate text-xs font-bold text-white md:mt-2 md:text-sm">
                   {liveMatch?.winner
                     ? "Completed"
                     : liveMatchActive
-                      ? "Live scoring"
-                      : "Ready to start"}
+                      ? "Live"
+                      : "Ready"}
                 </div>
 
-                <div className="mt-1 text-xs text-slate-400">
+                <div className="mt-0.5 hidden truncate text-xs text-slate-400 md:mt-1 md:block">
                   {liveSummary}
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
-                  Team Room
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2 md:rounded-2xl md:px-4 md:py-3">
+                <div className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
+                  Teams
                 </div>
 
-                <div className="mt-2 text-sm font-bold text-white">
-                  {teamsCount} teams saved
+                <div className="mt-1 truncate text-xs font-bold text-white md:mt-2 md:text-sm">
+                  {teamsCount} saved
                 </div>
 
-                <div className="mt-1 text-xs text-slate-400">
+                <div className="mt-0.5 hidden truncate text-xs text-slate-400 md:mt-1 md:block">
                   Match-ready squads
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2 md:rounded-2xl md:px-4 md:py-3">
+                <div className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
                   Archive
                 </div>
 
-                <div className="mt-2 text-sm font-bold text-white">
-                  {matchesCount} scorecards
+                <div className="mt-1 truncate text-xs font-bold text-white md:mt-2 md:text-sm">
+                  {matchesCount} cards
                 </div>
 
-                <div className="mt-1 text-xs text-slate-400">
+                <div className="mt-0.5 hidden truncate text-xs text-slate-400 md:mt-1 md:block">
                   Saved results and insights
                 </div>
               </div>
@@ -256,21 +265,25 @@ export default function Navbar({
       <nav
         className="
           fixed
-          inset-x-3
-          bottom-3
+          inset-x-2
+          bottom-2
           z-50
           grid
           grid-cols-5
-          gap-2
-          rounded-[1.75rem]
+          gap-1
+          rounded-[1.5rem]
           border
           border-white/10
           bg-slate-950/92
-          p-2
+          p-1.5
           shadow-[0_16px_60px_rgba(2,6,23,0.5)]
           backdrop-blur-xl
           md:hidden
         "
+        style={{
+          paddingBottom:
+            "max(0.375rem, env(safe-area-inset-bottom))",
+        }}
       >
         {NAV_ITEMS.map((item) => {
           const isActive =
@@ -282,13 +295,15 @@ export default function Navbar({
               key={item.to}
               to={item.to}
               className={`
+                relative
                 flex
+                min-h-[3rem]
                 flex-col
                 items-center
                 justify-center
-                rounded-2xl
-                px-2
-                py-2.5
+                rounded-xl
+                px-1
+                py-2
                 text-center
                 transition-all
                 ${
@@ -298,11 +313,16 @@ export default function Navbar({
                 }
               `}
             >
-              <span className="text-sm font-bold">
+              {item.to === "/live" &&
+                liveMatchActive && (
+                  <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                )}
+
+              <span className="text-[11px] font-bold leading-tight">
                 {item.label}
               </span>
 
-              <span className="mt-1 text-[10px] uppercase tracking-[0.24em]">
+              <span className="mt-0.5 text-[9px] uppercase tracking-[0.16em] leading-tight">
                 {item.subtitle}
               </span>
             </NavLink>

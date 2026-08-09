@@ -114,14 +114,16 @@ export default function Home({
         className="
           relative
           overflow-hidden
-          rounded-[2rem]
+          rounded-[1.5rem]
           border
           border-white/10
           bg-slate-950/82
-          px-5
-          py-8
+          px-4
+          py-6
           shadow-[0_24px_90px_rgba(2,6,23,0.35)]
+          md:rounded-[2rem]
           md:px-8
+          md:py-8
         "
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,197,94,0.18),_transparent_26%),radial-gradient(circle_at_80%_18%,_rgba(56,189,248,0.18),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(251,191,36,0.12),_transparent_28%)]" />
@@ -140,24 +142,24 @@ export default function Home({
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h1 className="max-w-4xl text-4xl font-black leading-tight md:text-6xl">
+            <div className="space-y-3 md:space-y-4">
+              <h1 className="max-w-4xl text-3xl font-black leading-tight md:text-6xl">
                 A friendlier control room for gully, box, and local league cricket.
               </h1>
 
-              <p className="max-w-3xl text-base leading-7 text-slate-300 md:text-lg">
+              <p className="max-w-3xl text-sm leading-6 text-slate-300 md:text-lg md:leading-7">
                 The app now guides the scorer more clearly: build teams, launch the innings, score ball by ball, and review the match later without losing track of what comes next.
               </p>
             </div>
 
-            <div className="rounded-[1.75rem] border border-white/10 bg-black/35 p-5">
-              <div className="text-[11px] font-black uppercase tracking-[0.32em] text-slate-500">
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/35 p-4 md:rounded-[1.75rem] md:p-5">
+              <div className="text-[10px] font-black uppercase tracking-[0.28em] text-slate-500 md:text-[11px] md:tracking-[0.32em]">
                 Next Best Action
               </div>
 
-              <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <div className="text-2xl font-black">
+                  <div className="text-xl font-black md:text-2xl">
                     {nextAction.label}
                   </div>
 
@@ -166,18 +168,22 @@ export default function Home({
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2 md:gap-3">
                   <Link
                     to={nextAction.to}
                     className="
                       rounded-full
                       bg-emerald-500
-                      px-5
-                      py-3
+                      px-4
+                      py-2.5
+                      text-sm
                       font-bold
                       text-slate-950
                       transition-all
                       hover:bg-emerald-400
+                      md:px-5
+                      md:py-3
+                      md:text-base
                     "
                   >
                     Continue
@@ -190,11 +196,15 @@ export default function Home({
                       border
                       border-white/10
                       bg-white/[0.04]
-                      px-5
-                      py-3
+                      px-4
+                      py-2.5
+                      text-sm
                       font-bold
                       transition-all
                       hover:bg-white/[0.08]
+                      md:px-5
+                      md:py-3
+                      md:text-base
                     "
                   >
                     Open Guide
@@ -203,45 +213,45 @@ export default function Home({
               </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-4">
-              <div className="rounded-2xl bg-black/35 p-4 backdrop-blur">
-                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+              <div className="rounded-xl bg-black/35 p-3 backdrop-blur md:rounded-2xl md:p-4">
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
                   Teams
                 </div>
 
-                <div className="mt-3 text-4xl font-black">
+                <div className="mt-2 text-2xl font-black md:mt-3 md:text-4xl">
                   {teams.length}
                 </div>
 
-                <div className="mt-2 text-sm text-slate-400">
+                <div className="mt-1 text-xs text-slate-400 md:mt-2 md:text-sm">
                   {currentUser
                     ? `${ownedTeams.length} owned by you`
                     : "Sign in to own squads"}
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-black/35 p-4 backdrop-blur">
-                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
+              <div className="rounded-xl bg-black/35 p-3 backdrop-blur md:rounded-2xl md:p-4">
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
                   Matches
                 </div>
 
-                <div className="mt-3 text-4xl font-black">
+                <div className="mt-2 text-2xl font-black md:mt-3 md:text-4xl">
                   {matches.length}
                 </div>
 
-                <div className="mt-2 text-sm text-slate-400">
+                <div className="mt-1 text-xs text-slate-400 md:mt-2 md:text-sm">
                   {currentUser
                     ? `${ownedMatches.length} scored by you`
                     : "Archive stays public"}
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-black/35 p-4 backdrop-blur">
-                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
+              <div className="rounded-xl bg-black/35 p-3 backdrop-blur md:rounded-2xl md:p-4">
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
                   Match State
                 </div>
 
-                <div className="mt-3 text-2xl font-black">
+                <div className="mt-2 text-xl font-black md:mt-3 md:text-2xl">
                   {liveMatch?.winner
                     ? "Result"
                     : liveMatchActive
@@ -249,7 +259,7 @@ export default function Home({
                       : "Standby"}
                 </div>
 
-                <div className="mt-2 text-sm text-slate-400">
+                <div className="mt-1 text-xs text-slate-400 md:mt-2 md:text-sm">
                   {liveMatch?.winner
                     ? liveMatch.winner
                     : liveMatchActive
@@ -258,44 +268,46 @@ export default function Home({
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-black/35 p-4 backdrop-blur">
-                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
+              <div className="rounded-xl bg-black/35 p-3 backdrop-blur md:rounded-2xl md:p-4">
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
                   Guide
                 </div>
 
-                <div className="mt-3 text-2xl font-black">
+                <div className="mt-2 text-xl font-black md:mt-3 md:text-2xl">
                   90 sec
                 </div>
 
-                <div className="mt-2 text-sm text-slate-400">
+                <div className="mt-1 text-xs text-slate-400 md:mt-2 md:text-sm">
                   Learn the flow before the first ball
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-5 shadow-2xl backdrop-blur">
+          <div className="space-y-3 md:space-y-4">
+            <div className="rounded-[1.5rem] border border-white/10 bg-slate-900/80 p-4 shadow-2xl backdrop-blur md:rounded-[1.75rem] md:p-5">
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
                     Live Deck
                   </div>
 
-                  <div className="mt-2 text-2xl font-black">
+                  <div className="mt-1 truncate text-lg font-black md:mt-2 md:text-2xl">
                     {liveMatch?.battingTeamName || "No team selected"}
                   </div>
                 </div>
 
                 <div
                   className={`
+                    shrink-0
                     rounded-full
                     px-3
                     py-1
-                    text-[11px]
+                    text-[10px]
                     font-black
                     uppercase
                     tracking-[0.2em]
+                    md:text-[11px]
                     ${
                       liveMatch?.winner
                         ? "bg-emerald-500/15 text-emerald-300"
@@ -313,12 +325,12 @@ export default function Home({
                 </div>
               </div>
 
-              <div className="mt-6 rounded-[1.5rem] bg-black/60 p-5">
-                <div className="text-6xl font-black tracking-tight">
+              <div className="mt-4 rounded-[1.25rem] bg-black/60 p-4 md:mt-6 md:rounded-[1.5rem] md:p-5">
+                <div className="text-4xl font-black tracking-tight md:text-6xl">
                   {liveMatch?.score || 0}/{liveMatch?.wickets || 0}
                 </div>
 
-                <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-400">
+                <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400 md:mt-3 md:gap-3 md:text-sm">
                   <span>Overs {liveMatch?.overs || "0.0"}</span>
                   <span>Innings {liveMatch?.innings || 1}</span>
                   {liveMatch?.target && (
@@ -329,14 +341,14 @@ export default function Home({
                 </div>
 
                 {liveMatch?.freeHit && (
-                  <div className="mt-4 rounded-xl bg-amber-400 px-3 py-2 text-center text-sm font-black text-slate-950">
+                  <div className="mt-3 rounded-xl bg-amber-400 px-3 py-2 text-center text-sm font-black text-slate-950 md:mt-4">
                     FREE HIT ACTIVE
                   </div>
                 )}
 
                 {!liveMatchActive &&
                   !liveMatch?.winner && (
-                    <div className="mt-4 rounded-xl border border-dashed border-white/10 px-4 py-3 text-sm text-slate-400">
+                    <div className="mt-3 rounded-xl border border-dashed border-white/10 px-3 py-2.5 text-xs text-slate-400 md:mt-4 md:px-4 md:py-3 md:text-sm">
                       Open `Live` to choose teams, overs, opening batters, and the first bowler.
                     </div>
                   )}
@@ -403,8 +415,8 @@ export default function Home({
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
-        <div className="rounded-[2rem] border border-white/10 bg-slate-950/80 p-6">
+      <section className="grid gap-4 md:gap-6 xl:grid-cols-[0.92fr_1.08fr]">
+        <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/80 p-4 md:rounded-[2rem] md:p-6">
           <div className="text-[11px] font-black uppercase tracking-[0.34em] text-emerald-300">
             Start Here
           </div>
@@ -464,7 +476,7 @@ export default function Home({
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-white/10 bg-slate-950/80 p-6">
+        <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/80 p-4 md:rounded-[2rem] md:p-6">
           <div className="flex flex-wrap gap-2">
             {Object.entries(
               FEATURE_PANELS

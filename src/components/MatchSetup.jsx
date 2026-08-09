@@ -132,16 +132,19 @@ export default function MatchSetup({
     <div
       className="
         bg-zinc-900
-        p-6
+        p-4
+        md:p-6
         rounded-2xl
         mt-6
       "
     >
       <h2
         className="
-          text-2xl
+          text-xl
+          md:text-2xl
           font-bold
-          mb-6
+          mb-4
+          md:mb-6
         "
       >
         Match Setup

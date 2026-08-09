@@ -29,8 +29,8 @@ export default function BowlingScorecard({
           Choose the starting bowler to begin the innings.
         </p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+          <table className="w-full min-w-[380px] text-sm md:text-base">
             <thead>
               <tr
                 className="
@@ -39,14 +39,14 @@ export default function BowlingScorecard({
                   text-left
                 "
               >
-                <th className="pb-3">
+                <th className="pb-3 pr-2">
                   Bowler
                 </th>
 
-                <th>O</th>
-                <th>R</th>
-                <th>W</th>
-                <th>ECO</th>
+                <th className="px-2 text-right">O</th>
+                <th className="px-2 text-right">R</th>
+                <th className="px-2 text-right">W</th>
+                <th className="pl-2 text-right">ECO</th>
               </tr>
             </thead>
 
@@ -74,8 +74,10 @@ export default function BowlingScorecard({
                   >
                     <td
                       className="
-                        py-4
+                        py-3
+                        pr-2
                         font-semibold
+                        md:py-4
                       "
                     >
                       {bowler.name}
@@ -84,8 +86,9 @@ export default function BowlingScorecard({
                         <span
                           className="
                             ml-2
-                            text-sm
+                            text-xs
                             text-yellow-400
+                            md:text-sm
                           "
                         >
                           live
@@ -93,15 +96,15 @@ export default function BowlingScorecard({
                       )}
                     </td>
 
-                    <td>
+                    <td className="px-2 text-right">
                       {formatOvers(
                         bowler.balls
                       )}
                     </td>
 
-                    <td>{bowler.runs}</td>
-                    <td>{bowler.wickets}</td>
-                    <td>{economy}</td>
+                    <td className="px-2 text-right">{bowler.runs}</td>
+                    <td className="px-2 text-right">{bowler.wickets}</td>
+                    <td className="pl-2 text-right">{economy}</td>
                   </tr>
                 )
               })}

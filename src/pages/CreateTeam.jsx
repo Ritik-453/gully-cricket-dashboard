@@ -168,7 +168,8 @@ export default function CreateTeam({
     <div
       className="
         bg-zinc-900
-        p-6
+        p-4
+        md:p-6
         rounded-2xl
         mt-6
       "
@@ -179,12 +180,14 @@ export default function CreateTeam({
           items-center
           justify-between
           gap-3
-          mb-6
+          mb-4
+          md:mb-6
         "
       >
         <h2
           className="
-            text-2xl
+            text-xl
+            md:text-2xl
             font-bold
           "
         >

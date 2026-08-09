@@ -12,21 +12,24 @@ export default function LiveMatch(props) {
   return (
     <div
       className="
-        p-3
-        md:p-6
+        flex
         max-w-7xl
+        flex-col
         mx-auto
       "
     >
       <div
         className="
+          order-2
+          lg:order-none
           grid
           grid-cols-1
           lg:grid-cols-2
-          gap-6
+          gap-4
+          md:gap-6
         "
       >
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <ScoreBoard
             balls={props.balls}
             freeHit={props.freeHit}
@@ -45,7 +48,7 @@ export default function LiveMatch(props) {
           />
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <BattingScorecard
             activeBatters={
               props.activeBatters
@@ -65,7 +68,7 @@ export default function LiveMatch(props) {
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="order-3 lg:order-none mt-6 md:mt-8">
         <MatchControls
           activeBatters={
             props.activeBatters
@@ -92,11 +95,15 @@ export default function LiveMatch(props) {
 
       <div
         className="
+          order-4
+          lg:order-none
           grid
           grid-cols-1
           lg:grid-cols-2
-          gap-6
-          mt-8
+          gap-4
+          md:gap-6
+          mt-6
+          md:mt-8
         "
       >
         <BallHistory
@@ -110,24 +117,26 @@ export default function LiveMatch(props) {
         />
       </div>
 
-      <MatchOverview
-        match={{
-          activeBatters:
-            props.activeBatters,
-          batters: props.batters,
-          balls: props.balls,
-          bowlers: props.bowlers,
-          extras: props.extras,
-          fallOfWickets:
-            props.fallOfWickets,
-          history: props.history,
-          overs: props.overs,
-          score: props.score,
-          wickets: props.wickets,
-        }}
-      />
+      <div className="order-5 lg:order-none">
+        <MatchOverview
+          match={{
+            activeBatters:
+              props.activeBatters,
+            batters: props.batters,
+            balls: props.balls,
+            bowlers: props.bowlers,
+            extras: props.extras,
+            fallOfWickets:
+              props.fallOfWickets,
+            history: props.history,
+            overs: props.overs,
+            score: props.score,
+            wickets: props.wickets,
+          }}
+        />
+      </div>
 
-      <div className="mt-8">
+      <div className="order-1 lg:order-none mt-0 lg:mt-8">
         <MatchSetup
           battingTeam={
             props.battingTeam

@@ -1924,12 +1924,12 @@ export default function App() {
         className="
           mx-auto
           max-w-7xl
-          px-4
-          pb-28
-          pt-6
+          px-3
+          pb-24
+          pt-4
           md:px-6
           md:pb-10
-          mx-auto
+          md:pt-6
         "
       >
         <Routes>

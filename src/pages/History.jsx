@@ -65,13 +65,15 @@ export default function History({
       : searchedMatches
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
       <div
         className="
           rounded-2xl
           bg-zinc-900
-          p-6
-          space-y-5
+          p-4
+          md:p-6
+          space-y-4
+          md:space-y-5
         "
       >
         <div
@@ -165,39 +167,39 @@ export default function History({
         <div
           className="
             grid
-            grid-cols-1
-            gap-3
-            md:grid-cols-3
+            grid-cols-3
+            gap-2
+            md:gap-3
           "
         >
-          <div className="rounded-2xl bg-black p-4">
-            <div className="text-sm text-zinc-400">
+          <div className="rounded-2xl bg-black p-3 md:p-4">
+            <div className="text-xs text-zinc-400 md:text-sm">
               Visible
             </div>
 
-            <div className="mt-2 text-3xl font-black">
+            <div className="mt-1 text-xl font-black md:mt-2 md:text-3xl">
               {visibleMatches.length}
             </div>
           </div>
 
-          <div className="rounded-2xl bg-black p-4">
-            <div className="text-sm text-zinc-400">
-              My Matches
+          <div className="rounded-2xl bg-black p-3 md:p-4">
+            <div className="text-xs text-zinc-400 md:text-sm">
+              Mine
             </div>
 
-            <div className="mt-2 text-3xl font-black">
+            <div className="mt-1 text-xl font-black md:mt-2 md:text-3xl">
               {currentUser
                 ? myMatches.length
                 : "-"}
             </div>
           </div>
 
-          <div className="rounded-2xl bg-black p-4">
-            <div className="text-sm text-zinc-400">
-              Total Archive
+          <div className="rounded-2xl bg-black p-3 md:p-4">
+            <div className="text-xs text-zinc-400 md:text-sm">
+              Total
             </div>
 
-            <div className="mt-2 text-3xl font-black">
+            <div className="mt-1 text-xl font-black md:mt-2 md:text-3xl">
               {matches.length}
             </div>
           </div>

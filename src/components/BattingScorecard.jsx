@@ -27,8 +27,8 @@ export default function BattingScorecard({
           Choose the opening batters to start the innings.
         </p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+          <table className="w-full min-w-[420px] text-sm md:text-base">
             <thead>
               <tr
                 className="
@@ -37,15 +37,15 @@ export default function BattingScorecard({
                   text-left
                 "
               >
-                <th className="pb-3">
+                <th className="pb-3 pr-2">
                   Batter
                 </th>
 
-                <th>R</th>
-                <th>B</th>
-                <th>4s</th>
-                <th>6s</th>
-                <th>SR</th>
+                <th className="px-2 text-right">R</th>
+                <th className="px-2 text-right">B</th>
+                <th className="px-2 text-right">4s</th>
+                <th className="px-2 text-right">6s</th>
+                <th className="pl-2 text-right">SR</th>
               </tr>
             </thead>
 
@@ -79,8 +79,10 @@ export default function BattingScorecard({
                   >
                     <td
                       className="
-                        py-4
+                        py-3
+                        pr-2
                         font-semibold
+                        md:py-4
                       "
                     >
                       {batter.name}
@@ -102,7 +104,8 @@ export default function BattingScorecard({
                             className="
                               text-zinc-400
                               ml-2
-                              text-sm
+                              text-xs
+                              md:text-sm
                             "
                           >
                             not out
@@ -110,11 +113,11 @@ export default function BattingScorecard({
                         )}
                     </td>
 
-                    <td>{batter.runs}</td>
-                    <td>{batter.balls}</td>
-                    <td>{batter.fours}</td>
-                    <td>{batter.sixes}</td>
-                    <td>{strikeRate}</td>
+                    <td className="px-2 text-right">{batter.runs}</td>
+                    <td className="px-2 text-right">{batter.balls}</td>
+                    <td className="px-2 text-right">{batter.fours}</td>
+                    <td className="px-2 text-right">{batter.sixes}</td>
+                    <td className="pl-2 text-right">{strikeRate}</td>
                   </tr>
                 )
               })}

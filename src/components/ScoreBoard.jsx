@@ -46,21 +46,22 @@ export default function ScoreBoard({
     <div
       className="
         bg-zinc-800
-        p-5
+        p-4
         md:p-6
         rounded-2xl
         shadow-2xl
         sticky
         top-2
-        z-40
+        z-30
       "
     >
 
       {/* TEAM NAME */}
       <h2 className="
-        text-2xl
+        text-xl
         md:text-3xl
         font-bold
+        truncate
       ">
 
         {teamA?.teamName || "Select Team"}
@@ -69,8 +70,9 @@ export default function ScoreBoard({
 
       {/* SCORE */}
       <div className="
-        mt-5
-        text-5xl
+        mt-3
+        md:mt-5
+        text-4xl
         md:text-7xl
         font-extrabold
       ">
@@ -81,8 +83,10 @@ export default function ScoreBoard({
 
       {/* OVERS */}
       <div className="
-        mt-3
-        text-lg
+        mt-2
+        md:mt-3
+        text-base
+        md:text-lg
         text-zinc-300
       ">
 
@@ -94,9 +98,11 @@ export default function ScoreBoard({
       {
         target && (
           <div className="
-            mt-3
+            mt-2
+            md:mt-3
             text-yellow-400
-            text-lg
+            text-base
+            md:text-lg
             font-semibold
           ">
 
@@ -110,27 +116,32 @@ export default function ScoreBoard({
       <div className="
         grid
         grid-cols-3
-        gap-3
-        mt-6
+        gap-2
+        md:gap-3
+        mt-4
+        md:mt-6
       ">
 
         {/* CRR */}
         <div className="
           bg-black/40
-          p-3
+          p-2
+          md:p-3
           rounded-xl
           text-center
         ">
 
           <div className="
             text-zinc-400
-            text-sm
+            text-xs
+            md:text-sm
           ">
             CRR
           </div>
 
           <div className="
-            text-xl
+            text-lg
+            md:text-xl
             font-bold
           ">
             {crr}
@@ -141,20 +152,23 @@ export default function ScoreBoard({
         {/* RRR */}
         <div className="
           bg-black/40
-          p-3
+          p-2
+          md:p-3
           rounded-xl
           text-center
         ">
 
           <div className="
             text-zinc-400
-            text-sm
+            text-xs
+            md:text-sm
           ">
             RRR
           </div>
 
           <div className="
-            text-xl
+            text-lg
+            md:text-xl
             font-bold
           ">
             {rrr}
@@ -165,20 +179,23 @@ export default function ScoreBoard({
         {/* NEED */}
         <div className="
           bg-black/40
-          p-3
+          p-2
+          md:p-3
           rounded-xl
           text-center
         ">
 
           <div className="
             text-zinc-400
-            text-sm
+            text-xs
+            md:text-sm
           ">
             Need
           </div>
 
           <div className="
-            text-xl
+            text-lg
+            md:text-xl
             font-bold
           ">
             {runsNeeded}

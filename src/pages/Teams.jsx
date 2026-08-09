@@ -47,11 +47,11 @@ function TeamCard({
     )
 
   return (
-    <div className="rounded-[1.7rem] border border-white/10 bg-slate-950/78 p-5 shadow-[0_20px_70px_rgba(2,6,23,0.22)]">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-3">
+    <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/78 p-4 shadow-[0_20px_70px_rgba(2,6,23,0.22)] md:rounded-[1.7rem] md:p-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between md:gap-4">
+        <div className="space-y-2 md:space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="text-2xl font-black">
+            <div className="text-xl font-black md:text-2xl">
               {team.teamName}
             </div>
 
@@ -282,75 +282,75 @@ export default function Teams({
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[2rem] border border-white/10 bg-slate-950/80 p-6 shadow-[0_24px_90px_rgba(2,6,23,0.35)]">
-        <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
-          <div className="space-y-5">
+      <section className="rounded-[1.5rem] border border-white/10 bg-slate-950/80 p-4 shadow-[0_24px_90px_rgba(2,6,23,0.35)] md:rounded-[2rem] md:p-6">
+        <div className="grid gap-5 md:gap-6 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="space-y-4 md:space-y-5">
             <div className="text-[11px] font-black uppercase tracking-[0.34em] text-sky-300">
               Team Workspace
             </div>
 
-            <div className="space-y-3">
-              <h1 className="text-4xl font-black leading-tight md:text-5xl">
+            <div className="space-y-2 md:space-y-3">
+              <h1 className="text-3xl font-black leading-tight md:text-5xl">
                 Keep squads organized before the first ball is scored.
               </h1>
 
-              <p className="max-w-3xl text-base leading-7 text-slate-300">
+              <p className="max-w-3xl text-sm leading-6 text-slate-300 md:text-base md:leading-7">
                 This page now separates account access, team building, and squad review into a cleaner workspace. Sign in, create or edit your teams, then send them straight into live setup without retyping players.
               </p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl bg-white/[0.04] p-4">
-                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
-                  Visible Teams
+            <div className="grid grid-cols-3 gap-2 md:gap-3">
+              <div className="rounded-xl bg-white/[0.04] p-3 md:rounded-2xl md:p-4">
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
+                  Visible
                 </div>
 
-                <div className="mt-3 text-4xl font-black">
+                <div className="mt-2 text-2xl font-black md:mt-3 md:text-4xl">
                   {searchedTeams.length}
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white/[0.04] p-4">
-                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
-                  Your Teams
+              <div className="rounded-xl bg-white/[0.04] p-3 md:rounded-2xl md:p-4">
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
+                  Yours
                 </div>
 
-                <div className="mt-3 text-4xl font-black">
+                <div className="mt-2 text-2xl font-black md:mt-3 md:text-4xl">
                   {currentUser
                     ? ownedTeams.length
                     : 0}
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white/[0.04] p-4">
-                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-slate-500">
+              <div className="rounded-xl bg-white/[0.04] p-3 md:rounded-2xl md:p-4">
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 md:text-[11px] md:tracking-[0.24em]">
                   Read Only
                 </div>
 
-                <div className="mt-3 text-4xl font-black">
+                <div className="mt-2 text-2xl font-black md:mt-3 md:text-4xl">
                   {readOnlyTeams.length}
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 md:gap-3">
               <Link
                 to="/live"
-                className="rounded-full bg-emerald-500 px-5 py-3 font-bold text-slate-950 transition-all hover:bg-emerald-400"
+                className="rounded-full bg-emerald-500 px-4 py-2.5 text-sm font-bold text-slate-950 transition-all hover:bg-emerald-400 md:px-5 md:py-3 md:text-base"
               >
                 Use Teams In Live Match
               </Link>
 
               <Link
                 to="/guide"
-                className="rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 font-bold transition-all hover:bg-white/[0.08]"
+                className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-bold transition-all hover:bg-white/[0.08] md:px-5 md:py-3 md:text-base"
               >
                 Open Quick Guide
               </Link>
             </div>
           </div>
 
-          <div className="rounded-[1.75rem] border border-white/10 bg-black/30 p-5">
+          <div className="rounded-[1.5rem] border border-white/10 bg-black/30 p-4 md:rounded-[1.75rem] md:p-5">
             <div className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-300">
               Search Squads
             </div>
