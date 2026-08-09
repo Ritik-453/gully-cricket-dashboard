@@ -10,14 +10,14 @@ const NAV_ITEMS = [
     to: "/",
   },
   {
-    label: "Live",
-    subtitle: "Scoring",
-    to: "/live",
-  },
-  {
     label: "Teams",
     subtitle: "Squads",
     to: "/teams",
+  },
+  {
+    label: "Live",
+    subtitle: "Scoring",
+    to: "/live",
   },
   {
     label: "Archive",

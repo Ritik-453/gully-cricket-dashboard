@@ -6,6 +6,7 @@ import {
 import { Link } from "react-router-dom"
 
 import AuthPanel from "../components/AuthPanel"
+import ImportTeamById from "../components/ImportTeamById"
 import CreateTeam from "./CreateTeam"
 
 const canManageTeam = (
@@ -38,6 +39,7 @@ function TeamCard({
   isEditing,
   onDelete,
   onEdit,
+  onImport,
   team,
 }) {
   const ownedByCurrentUser =
@@ -45,6 +47,36 @@ function TeamCard({
       team,
       currentUser
     )
+
+  const [copied, setCopied] =
+    useState(false)
+
+  const [importing, setImporting] =
+    useState(false)
+
+  const handleCopyId = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        team.id
+      )
+      setCopied(true)
+      setTimeout(
+        () => setCopied(false),
+        1600
+      )
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handleImportClick =
+    async () => {
+      if (!onImport) return
+
+      setImporting(true)
+      await onImport(team)
+      setImporting(false)
+    }
 
   return (
     <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/78 p-4 shadow-[0_20px_70px_rgba(2,6,23,0.22)] md:rounded-[1.7rem] md:p-5">
@@ -120,6 +152,7 @@ function TeamCard({
                 text-sm
                 font-bold
                 transition-all
+                active:scale-95
                 ${
                   isEditing
                     ? "bg-sky-500 text-slate-950"
@@ -136,14 +169,33 @@ function TeamCard({
               onClick={() =>
                 onDelete(team)
               }
-              className="rounded-full bg-rose-500/15 px-4 py-2.5 text-sm font-bold text-rose-200 transition-all hover:bg-rose-500/25"
+              className="rounded-full bg-rose-500/15 px-4 py-2.5 text-sm font-bold text-rose-200 transition-all hover:bg-rose-500/25 active:scale-95"
             >
               Delete
             </button>
           </div>
         ) : (
-          <div className="rounded-full bg-white/[0.05] px-4 py-2.5 text-sm font-bold text-slate-300">
-            View only
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="rounded-full bg-white/[0.05] px-4 py-2.5 text-sm font-bold text-slate-300">
+              View only
+            </div>
+
+            {onImport &&
+              currentUser && (
+                <button
+                  onClick={
+                    handleImportClick
+                  }
+                  disabled={
+                    importing
+                  }
+                  className="rounded-full bg-emerald-500/15 px-4 py-2.5 text-sm font-bold text-emerald-200 transition-all hover:bg-emerald-500/25 active:scale-95 disabled:opacity-60"
+                >
+                  {importing
+                    ? "Importing..."
+                    : "Import As Mine"}
+                </button>
+              )}
           </div>
         )}
       </div>
@@ -157,6 +209,25 @@ function TeamCard({
             {player}
           </span>
         ))}
+      </div>
+
+      <div className="mt-4 flex items-center gap-2 border-t border-white/5 pt-3">
+        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+          Team ID
+        </span>
+
+        <code className="truncate text-xs text-slate-400">
+          {team.id}
+        </code>
+
+        <button
+          onClick={handleCopyId}
+          className="ml-auto shrink-0 rounded-full bg-white/[0.05] px-3 py-1 text-xs font-bold text-slate-300 transition-all hover:bg-white/[0.1] active:scale-95"
+        >
+          {copied
+            ? "Copied!"
+            : "Copy ID"}
+        </button>
       </div>
     </div>
   )
@@ -178,6 +249,9 @@ export default function Teams({
 }) {
   const [editingTeam, setEditingTeam] =
     useState(null)
+
+  const [builderTab, setBuilderTab] =
+    useState("create")
 
   const [search, setSearch] =
     useState("")
@@ -236,6 +310,17 @@ export default function Teams({
   const handleCreateTeam = async (
     teamData
   ) => createTeam(teamData)
+
+  const handleImportTeam = async (
+    sourceTeam
+  ) =>
+    createTeam({
+      teamName: sourceTeam.teamName,
+      captain: sourceTeam.captain,
+      players: [
+        ...sourceTeam.players,
+      ],
+    })
 
   const handleUpdateTeam = async (
     teamData
@@ -375,8 +460,8 @@ export default function Teams({
               {editingTeam
                 ? `Editing ${editingTeam.teamName}. Finish updating it or cancel before switching.`
                 : currentUser
-                  ? "You can create new teams and edit only the teams owned by your account."
-                  : "Sign in first if you want to create or edit teams."}
+                  ? "Create a new squad, or import one instantly using another team's ID."
+                  : "Sign in first if you want to create, edit, or import teams."}
             </div>
           </div>
         </div>
@@ -406,22 +491,97 @@ export default function Teams({
 
         <div>
           {currentUser ? (
-            <CreateTeam
-              initialTeam={editingTeam}
-              mode={
-                editingTeam
-                  ? "edit"
-                  : "create"
-              }
-              onCancel={() =>
-                setEditingTeam(null)
-              }
-              onSubmit={
-                editingTeam
-                  ? handleUpdateTeam
-                  : handleCreateTeam
-              }
-            />
+            <div className="space-y-4">
+              {!editingTeam && (
+                <div className="flex gap-2 rounded-2xl border border-white/10 bg-slate-950/60 p-1.5">
+                  <button
+                    onClick={() =>
+                      setBuilderTab(
+                        "create"
+                      )
+                    }
+                    className={`
+                      flex-1
+                      rounded-xl
+                      px-3
+                      py-2.5
+                      text-sm
+                      font-bold
+                      transition-all
+                      active:scale-95
+                      ${
+                        builderTab ===
+                        "create"
+                          ? "bg-emerald-500 text-slate-950"
+                          : "text-slate-300 hover:bg-white/[0.05]"
+                      }
+                    `}
+                  >
+                    Create New Team
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      setBuilderTab(
+                        "import"
+                      )
+                    }
+                    className={`
+                      flex-1
+                      rounded-xl
+                      px-3
+                      py-2.5
+                      text-sm
+                      font-bold
+                      transition-all
+                      active:scale-95
+                      ${
+                        builderTab ===
+                        "import"
+                          ? "bg-sky-500 text-slate-950"
+                          : "text-slate-300 hover:bg-white/[0.05]"
+                      }
+                    `}
+                  >
+                    Import By ID
+                  </button>
+                </div>
+              )}
+
+              {editingTeam ||
+              builderTab ===
+                "create" ? (
+                <CreateTeam
+                  initialTeam={
+                    editingTeam
+                  }
+                  mode={
+                    editingTeam
+                      ? "edit"
+                      : "create"
+                  }
+                  onCancel={() =>
+                    setEditingTeam(
+                      null
+                    )
+                  }
+                  onSubmit={
+                    editingTeam
+                      ? handleUpdateTeam
+                      : handleCreateTeam
+                  }
+                />
+              ) : (
+                <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/78 p-5">
+                  <ImportTeamById
+                    onImport={
+                      handleImportTeam
+                    }
+                    teams={teams}
+                  />
+                </div>
+              )}
+            </div>
           ) : (
             <div className="rounded-[1.75rem] border border-dashed border-white/10 bg-slate-950/60 p-8 text-center text-slate-400">
               Account access sits on the left. Once you sign in, the team builder will appear here.
@@ -507,6 +667,9 @@ export default function Teams({
                     handleDeleteTeam
                   }
                   onEdit={setEditingTeam}
+                  onImport={
+                    handleImportTeam
+                  }
                   team={team}
                 />
               ))}

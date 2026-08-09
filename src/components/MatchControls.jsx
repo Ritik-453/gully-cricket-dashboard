@@ -47,6 +47,11 @@ export default function MatchControls({
   strikerName,
 }) {
   const [
+    wicketFlowOpen,
+    setWicketFlowOpen,
+  ] = useState(false)
+
+  const [
     selectedDismissal,
     setSelectedDismissal,
   ] = useState("bowled")
@@ -71,6 +76,9 @@ export default function MatchControls({
   const isRunOut =
     selectedDismissal === "run_out"
 
+  const onlyRunOutAllowed =
+    pendingNoBall
+
   const nonStrikerName =
     activeBatters.find(
       (name) =>
@@ -92,12 +100,38 @@ export default function MatchControls({
     runOutDismissedBatter,
   ])
 
-  const wicketDisabled =
-    disabled ||
-    (
-      pendingNoBall &&
-      !isRunOut
+  useEffect(() => {
+    if (disabled) {
+      setWicketFlowOpen(false)
+    }
+  }, [disabled])
+
+  const openWicketFlow = () => {
+    setSelectedDismissal(
+      onlyRunOutAllowed
+        ? "run_out"
+        : "bowled"
     )
+    setRunOutCompletedRuns(0)
+    setRunOutDismissedBatter(
+      "striker"
+    )
+    setWicketFlowOpen(true)
+  }
+
+  const closeWicketFlow = () => {
+    setWicketFlowOpen(false)
+  }
+
+  const confirmWicket = () => {
+    addWicket(selectedDismissal, {
+      completedRuns:
+        runOutCompletedRuns,
+      dismissedBatter:
+        runOutDismissedBatter,
+    })
+    setWicketFlowOpen(false)
+  }
 
   const buttonStyle = `
     min-h-[3.25rem]
@@ -141,154 +175,213 @@ export default function MatchControls({
         </div>
       )}
 
-      <div
-        className="
-          rounded-2xl
-          border
-          border-zinc-800
-          bg-zinc-900
-          p-3
-          space-y-3
-          md:p-4
-          md:space-y-4
-        "
-      >
-        <div
-          className="
-            flex
-            flex-col
-            gap-2
-            md:flex-row
-            md:items-center
-            md:justify-between
-          "
-        >
-          <div>
-            <div className="text-sm text-zinc-400">
-              Dismissal Type
+      {!wicketFlowOpen ? (
+        <div className="animate-pop-in space-y-3">
+          {(pendingNoBall ||
+            freeHit) && (
+            <div className="flex flex-wrap gap-2">
+              {pendingNoBall && (
+                <div className="rounded-full bg-purple-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-purple-300">
+                  No ball pending
+                </div>
+              )}
+
+              {freeHit && (
+                <div className="rounded-full bg-yellow-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-yellow-300">
+                  Free hit active
+                </div>
+              )}
             </div>
-
-            <div className="text-lg font-bold">
-              {
-                selectedDismissalOption.label
-              }
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {pendingNoBall && (
-              <div className="rounded-full bg-purple-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-purple-300">
-                No ball pending
-              </div>
-            )}
-
-            {freeHit && (
-              <div className="rounded-full bg-yellow-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-yellow-300">
-                Free hit active
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div
-          className="
-            grid
-            grid-cols-2
-            gap-2
-            md:grid-cols-5
-          "
-        >
-          {DISMISSAL_OPTIONS.map(
-            (option) => (
-              <button
-                key={option.value}
-                onClick={() =>
-                  setSelectedDismissal(
-                    option.value
-                  )
-                }
-                className={`
-                  rounded-xl
-                  px-3
-                  py-3
-                  text-sm
-                  font-semibold
-                  transition-all
-                  active:scale-95
-                  ${
-                    selectedDismissal ===
-                    option.value
-                      ? "bg-red-600 text-white"
-                      : "bg-black text-zinc-300 hover:bg-zinc-800"
-                  }
-                `}
-              >
-                {option.label}
-              </button>
-            )
           )}
-        </div>
 
-        {isRunOut && (
           <div
             className="
-              rounded-2xl
-              bg-black/50
-              p-4
-              space-y-3
+              grid
+              grid-cols-3
+              md:grid-cols-4
+              gap-2
+              md:gap-4
             "
           >
-            <div className="text-sm text-zinc-400">
-              Who is out?
+            {[0, 1, 2, 3].map(
+              (runs) => (
+                <button
+                  key={runs}
+                  onClick={() =>
+                    addRuns(runs)
+                  }
+                  disabled={
+                    disabled
+                  }
+                  className={`${buttonStyle} bg-zinc-700`}
+                >
+                  {runs}
+                </button>
+              )
+            )}
+
+            <button
+              onClick={() =>
+                addRuns(4)
+              }
+              disabled={disabled}
+              className={`${buttonStyle} bg-blue-600`}
+            >
+              4
+            </button>
+
+            <button
+              onClick={() =>
+                addRuns(6)
+              }
+              disabled={disabled}
+              className={`${buttonStyle} bg-green-600`}
+            >
+              6
+            </button>
+
+            <button
+              onClick={addWide}
+              disabled={
+                disabled ||
+                pendingNoBall
+              }
+              className={`${buttonStyle} bg-yellow-500 text-black`}
+            >
+              Wide
+            </button>
+
+            <button
+              onClick={addNoBall}
+              disabled={
+                disabled ||
+                pendingNoBall
+              }
+              className={`${buttonStyle} bg-purple-600`}
+            >
+              No Ball
+            </button>
+
+            <button
+              onClick={
+                openWicketFlow
+              }
+              disabled={disabled}
+              className={`${buttonStyle} bg-red-600 col-span-3 md:col-span-4`}
+            >
+              WICKET
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="
+            animate-pop-in
+            rounded-2xl
+            border
+            border-red-500/25
+            bg-zinc-900
+            p-4
+            space-y-4
+            md:p-5
+          "
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-lg font-black text-red-300 md:text-xl">
+              Recording A Wicket
             </div>
 
-            <div
-              className={`
-                grid
-                gap-2
-                ${
-                  nonStrikerName
-                    ? "grid-cols-2"
-                    : "grid-cols-1"
-                }
-              `}
+            <button
+              onClick={
+                closeWicketFlow
+              }
+              className="rounded-full bg-white/[0.06] px-4 py-2 text-sm font-bold text-zinc-300 transition-all hover:bg-white/[0.1] active:scale-95"
             >
-              <button
-                onClick={() =>
-                  setRunOutDismissedBatter(
-                    "striker"
+              Cancel
+            </button>
+          </div>
+
+          {onlyRunOutAllowed ? (
+            <div className="rounded-2xl bg-purple-500/10 px-4 py-3 text-sm text-purple-200">
+              No-ball in effect — only a run out can be given on this delivery.
+            </div>
+          ) : (
+            <div>
+              <div className="mb-2 text-sm text-zinc-400">
+                How was the batter out?
+              </div>
+
+              <div
+                className="
+                  grid
+                  grid-cols-2
+                  gap-2
+                  md:grid-cols-5
+                "
+              >
+                {DISMISSAL_OPTIONS.map(
+                  (option) => (
+                    <button
+                      key={
+                        option.value
+                      }
+                      onClick={() =>
+                        setSelectedDismissal(
+                          option.value
+                        )
+                      }
+                      className={`
+                        rounded-xl
+                        px-3
+                        py-3
+                        text-sm
+                        font-semibold
+                        transition-all
+                        active:scale-95
+                        ${
+                          selectedDismissal ===
+                          option.value
+                            ? "bg-red-600 text-white"
+                            : "bg-black text-zinc-300 hover:bg-zinc-800"
+                        }
+                      `}
+                    >
+                      {option.label}
+                    </button>
                   )
-                }
+                )}
+              </div>
+            </div>
+          )}
+
+          {isRunOut && (
+            <div
+              className="
+                rounded-2xl
+                bg-black/50
+                p-4
+                space-y-3
+              "
+            >
+              <div className="text-sm text-zinc-400">
+                Who is out?
+              </div>
+
+              <div
                 className={`
-                  rounded-xl
-                  px-3
-                  py-3
-                  text-left
-                  transition-all
-                  active:scale-95
+                  grid
+                  gap-2
                   ${
-                    runOutDismissedBatter ===
-                    "striker"
-                      ? "bg-red-600 text-white"
-                      : "bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
+                    nonStrikerName
+                      ? "grid-cols-2"
+                      : "grid-cols-1"
                   }
                 `}
               >
-                <div className="font-bold">
-                  {strikerName ||
-                    "Current striker"}
-                </div>
-
-                <div className="text-xs uppercase tracking-wide opacity-80">
-                  Striker
-                </div>
-              </button>
-
-              {nonStrikerName && (
                 <button
                   onClick={() =>
                     setRunOutDismissedBatter(
-                      "non_striker"
+                      "striker"
                     )
                   }
                   className={`
@@ -300,149 +393,112 @@ export default function MatchControls({
                     active:scale-95
                     ${
                       runOutDismissedBatter ===
-                      "non_striker"
+                      "striker"
                         ? "bg-red-600 text-white"
                         : "bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
                     }
                   `}
                 >
                   <div className="font-bold">
-                    {
-                      nonStrikerName
-                    }
+                    {strikerName ||
+                      "Current striker"}
                   </div>
 
                   <div className="text-xs uppercase tracking-wide opacity-80">
-                    Non-striker
+                    Striker
                   </div>
                 </button>
-              )}
-            </div>
 
-            <div className="text-sm text-zinc-400">
-              Completed runs before the wicket
-            </div>
-
-            <div className="grid grid-cols-5 gap-2">
-              {RUN_OUT_OPTIONS.map(
-                (runs) => (
+                {nonStrikerName && (
                   <button
-                    key={runs}
                     onClick={() =>
-                      setRunOutCompletedRuns(
-                        runs
+                      setRunOutDismissedBatter(
+                        "non_striker"
                       )
                     }
                     className={`
                       rounded-xl
                       px-3
                       py-3
-                      text-sm
-                      font-bold
+                      text-left
                       transition-all
                       active:scale-95
                       ${
-                        runOutCompletedRuns ===
-                        runs
-                          ? "bg-emerald-500 text-black"
+                        runOutDismissedBatter ===
+                        "non_striker"
+                          ? "bg-red-600 text-white"
                           : "bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
                       }
                     `}
                   >
-                    {runs}
+                    <div className="font-bold">
+                      {
+                        nonStrikerName
+                      }
+                    </div>
+
+                    <div className="text-xs uppercase tracking-wide opacity-80">
+                      Non-striker
+                    </div>
                   </button>
-                )
-              )}
-            </div>
+                )}
+              </div>
 
-            <div className="text-xs leading-6 text-zinc-400">
-              Choose the dismissed batter, then set the runs already completed before the wicket. Example: run out on the 2nd run means only 1 completed run should be selected.
-            </div>
-          </div>
-        )}
-      </div>
+              <div className="text-sm text-zinc-400">
+                Completed runs before the wicket
+              </div>
 
-      <div
-        className="
-          grid
-          grid-cols-3
-          md:grid-cols-4
-          gap-2
-          md:gap-4
-        "
-      >
-        {[0, 1, 2, 3].map((runs) => (
+              <div className="grid grid-cols-5 gap-2">
+                {RUN_OUT_OPTIONS.map(
+                  (runs) => (
+                    <button
+                      key={runs}
+                      onClick={() =>
+                        setRunOutCompletedRuns(
+                          runs
+                        )
+                      }
+                      className={`
+                        rounded-xl
+                        px-3
+                        py-3
+                        text-sm
+                        font-bold
+                        transition-all
+                        active:scale-95
+                        ${
+                          runOutCompletedRuns ===
+                          runs
+                            ? "bg-emerald-500 text-black"
+                            : "bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
+                        }
+                      `}
+                    >
+                      {runs}
+                    </button>
+                  )
+                )}
+              </div>
+
+              <div className="text-xs leading-6 text-zinc-400">
+                Example: run out going for the 2nd run means only 1 completed run should be selected.
+              </div>
+            </div>
+          )}
+
           <button
-            key={runs}
-            onClick={() =>
-              addRuns(runs)
-            }
-            disabled={disabled}
-            className={`${buttonStyle} bg-zinc-700`}
+            onClick={confirmWicket}
+            className="w-full rounded-2xl bg-red-600 py-4 text-lg font-black transition-all hover:brightness-110 active:scale-95 md:text-xl"
           >
-            {runs}
+            Confirm Wicket —{" "}
+            {
+              selectedDismissalOption.label
+            }
+            {isRunOut &&
+              ` (${runOutDismissedBatter === "non_striker" ? "non-striker" : "striker"} out, ${runOutCompletedRuns} run${runOutCompletedRuns === 1 ? "" : "s"} completed)`}
           </button>
-        ))}
-
-        <button
-          onClick={() => addRuns(4)}
-          disabled={disabled}
-          className={`${buttonStyle} bg-blue-600`}
-        >
-          4
-        </button>
-
-        <button
-          onClick={() => addRuns(6)}
-          disabled={disabled}
-          className={`${buttonStyle} bg-green-600`}
-        >
-          6
-        </button>
-
-        <button
-          onClick={addWide}
-          disabled={
-            disabled || pendingNoBall
-          }
-          className={`${buttonStyle} bg-yellow-500 text-black`}
-        >
-          Wide
-        </button>
-
-        <button
-          onClick={addNoBall}
-          disabled={
-            disabled || pendingNoBall
-          }
-          className={`${buttonStyle} bg-purple-600`}
-        >
-          No Ball
-        </button>
-
-        <button
-          onClick={() =>
-            addWicket(
-              selectedDismissal,
-              {
-                completedRuns:
-                  runOutCompletedRuns,
-                dismissedBatter:
-                  runOutDismissedBatter,
-              }
-            )
-          }
-          disabled={wicketDisabled}
-          className={`${buttonStyle} bg-red-600 col-span-3 md:col-span-4`}
-        >
-          WICKET -{" "}
-          {
-            selectedDismissalOption.label
-          }
-          {isRunOut &&
-            ` - ${runOutDismissedBatter === "non_striker" ? "non-striker" : "striker"} out - ${runOutCompletedRuns} run${runOutCompletedRuns === 1 ? "" : "s"} completed`}
-        </button>
-      </div>
+        </div>
+      )}
     </div>
   )
 }
