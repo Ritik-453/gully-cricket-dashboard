@@ -241,6 +241,7 @@ export default function Teams({
   deleteTeam,
   emailLogin,
   emailSignup,
+  forgotPassword,
   googleLogin,
   logout,
   teams,
@@ -475,6 +476,9 @@ export default function Teams({
             currentUser={currentUser}
             onEmailLogin={emailLogin}
             onEmailSignup={emailSignup}
+            onForgotPassword={
+              forgotPassword
+            }
             onGoogleLogin={googleLogin}
             onLogout={logout}
             onUpdateName={

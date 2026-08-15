@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom"
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -26,6 +27,7 @@ import {
 import Navbar from "./components/Navbar"
 import Toast from "./components/Toast"
 import Confetti from "./components/Confetti"
+import LoginGate from "./components/LoginGate"
 
 import Home from "./pages/Home"
 import Teams from "./pages/Teams"
@@ -317,6 +319,9 @@ const getAuthErrorMessage = (
   return `${fallbackMessage} (${technicalDetail})`
 }
 
+const ENTERED_STORAGE_KEY =
+  "gcd-entered-app"
+
 export default function App() {
   const [currentUser, setCurrentUser] =
     useState(null)
@@ -326,6 +331,40 @@ export default function App() {
 
   const [authBusy, setAuthBusy] =
     useState(false)
+
+  const [
+    hasEnteredApp,
+    setHasEnteredApp,
+  ] = useState(() => {
+    if (
+      typeof window === "undefined"
+    ) {
+      return false
+    }
+
+    return (
+      window.localStorage.getItem(
+        ENTERED_STORAGE_KEY
+      ) === "true"
+    )
+  })
+
+  const markEntered = () => {
+    try {
+      window.localStorage.setItem(
+        ENTERED_STORAGE_KEY,
+        "true"
+      )
+    } catch (error) {
+      console.log(error)
+    }
+
+    setHasEnteredApp(true)
+  }
+
+  const enterAsGuest = () => {
+    markEntered()
+  }
 
   const [score, setScore] =
     useState(0)
@@ -841,6 +880,8 @@ export default function App() {
           trimmedEmail,
       })
 
+      markEntered()
+
       showToast(
         "Account created successfully"
       )
@@ -894,6 +935,8 @@ export default function App() {
         )
       )
 
+      markEntered()
+
       showToast("Signed in")
       return true
     } catch (error) {
@@ -927,6 +970,8 @@ export default function App() {
         )
       )
 
+      markEntered()
+
       showToast("Signed in")
       return true
     } catch (error) {
@@ -944,12 +989,65 @@ export default function App() {
     }
   }
 
+  const forgotPassword = async (
+    email
+  ) => {
+    const trimmedEmail =
+      email.trim()
+
+    if (!trimmedEmail) {
+      showToast(
+        "Enter your email first",
+        "warning"
+      )
+      return false
+    }
+
+    setAuthBusy(true)
+
+    try {
+      await sendPasswordResetEmail(
+        auth,
+        trimmedEmail
+      )
+
+      showToast(
+        "Password reset email sent — check your inbox."
+      )
+
+      return true
+    } catch (error) {
+      console.log(error)
+      showToast(
+        getAuthErrorMessage(
+          error,
+          "Error sending reset email"
+        ),
+        "warning"
+      )
+      return false
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
   const logout = async () => {
     setAuthBusy(true)
 
     try {
       await signOut(auth)
       setCurrentUser(null)
+
+      try {
+        window.localStorage.removeItem(
+          ENTERED_STORAGE_KEY
+        )
+      } catch (storageError) {
+        console.log(storageError)
+      }
+
+      setHasEnteredApp(false)
+
       showToast("Signed out")
       return true
     } catch (error) {
@@ -2043,6 +2141,45 @@ export default function App() {
     winner,
   }
 
+  if (!authReady) {
+    return (
+      <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center gap-4 bg-slate-950">
+        <div className="flex h-14 w-14 animate-pulse items-center justify-center rounded-2xl border border-emerald-400/25 bg-emerald-500/10 text-xl font-black text-emerald-300">
+          GC
+        </div>
+
+        <div className="text-sm text-slate-400">
+          Loading Gully Cricket Dashboard...
+        </div>
+      </div>
+    )
+  }
+
+  if (
+    authReady &&
+    !currentUser &&
+    !hasEnteredApp
+  ) {
+    return (
+      <LoginGate
+        authBusy={authBusy}
+        onContinueAsGuest={
+          enterAsGuest
+        }
+        onEmailLogin={emailLogin}
+        onEmailSignup={
+          emailSignup
+        }
+        onForgotPassword={
+          forgotPassword
+        }
+        onGoogleLogin={
+          googleLogin
+        }
+      />
+    )
+  }
+
   return (
     <div
       className="
@@ -2101,6 +2238,9 @@ export default function App() {
                 deleteTeam={deleteTeam}
                 emailLogin={emailLogin}
                 emailSignup={emailSignup}
+                forgotPassword={
+                  forgotPassword
+                }
                 googleLogin={googleLogin}
                 logout={logout}
                 teams={teams}

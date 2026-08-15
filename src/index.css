@@ -259,3 +259,64 @@ body {
     opacity: 0.4;
   }
 }
+
+@keyframes gate-in {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-gate-in {
+  animation: gate-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes gate-backdrop-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-gate-backdrop {
+  animation: gate-backdrop-in 0.5s ease-out both;
+}
+
+@keyframes tab-content-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-tab-content {
+  animation: tab-content-in 0.3s ease-out both;
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(24px, -18px) scale(1.06);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 9s ease-in-out infinite;
+}
+
+.animate-float-slow-reverse {
+  animation: float-slow 11s ease-in-out infinite reverse;
+}

@@ -9,6 +9,7 @@ export default function AuthPanel({
   currentUser,
   onEmailLogin,
   onEmailSignup,
+  onForgotPassword,
   onGoogleLogin,
   onLogout,
   onUpdateName,
@@ -24,6 +25,9 @@ export default function AuthPanel({
 
   const [password, setPassword] =
     useState("")
+
+  const [resetSent, setResetSent] =
+    useState(false)
 
   useEffect(() => {
     setName(currentUser?.name || "")
@@ -52,6 +56,19 @@ export default function AuthPanel({
 
       if (isSignedUp) {
         resetForm()
+      }
+
+      return
+    }
+
+    if (mode === "forgot") {
+      const isSent =
+        await onForgotPassword(
+          trimmedEmail
+        )
+
+      if (isSent) {
+        setResetSent(true)
       }
 
       return
@@ -216,17 +233,20 @@ export default function AuthPanel({
 
       <div className="flex gap-2">
         <button
-          onClick={() =>
+          onClick={() => {
             setMode("login")
-          }
+            setResetSent(false)
+          }}
           className={`
             rounded-xl
             px-4
             py-2
             font-semibold
             transition-all
+            active:scale-95
             ${
-              mode === "login"
+              mode === "login" ||
+              mode === "forgot"
                 ? "bg-blue-600"
                 : "bg-zinc-800 hover:bg-zinc-700"
             }
@@ -236,15 +256,17 @@ export default function AuthPanel({
         </button>
 
         <button
-          onClick={() =>
+          onClick={() => {
             setMode("signup")
-          }
+            setResetSent(false)
+          }}
           className={`
             rounded-xl
             px-4
             py-2
             font-semibold
             transition-all
+            active:scale-95
             ${
               mode === "signup"
                 ? "bg-blue-600"
@@ -256,17 +278,63 @@ export default function AuthPanel({
         </button>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-3"
-      >
-        {mode === "signup" && (
+      {mode === "forgot" &&
+      resetSent ? (
+        <div className="animate-pop-in space-y-4 rounded-xl bg-black/40 p-4 text-center">
+          <div className="text-sm text-zinc-300">
+            If an account exists for{" "}
+            <span className="font-bold text-white">
+              {email}
+            </span>
+            , a reset link is on its way. Check your inbox.
+          </div>
+
+          <button
+            onClick={() => {
+              setMode("login")
+              setResetSent(false)
+            }}
+            className="w-full rounded-xl bg-emerald-600 py-3 font-bold transition-all hover:bg-emerald-700 active:scale-95"
+          >
+            Back To Login
+          </button>
+        </div>
+      ) : (
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-3"
+        >
+          {mode === "signup" && (
+            <input
+              type="text"
+              placeholder="Display name"
+              value={name}
+              onChange={(event) =>
+                setName(
+                  event.target.value
+                )
+              }
+              className="
+                w-full
+                rounded-xl
+                bg-black
+                p-3
+              "
+            />
+          )}
+
+          {mode === "forgot" && (
+            <div className="text-sm text-zinc-400">
+              Enter your email and we&apos;ll send a link to reset your password.
+            </div>
+          )}
+
           <input
-            type="text"
-            placeholder="Display name"
-            value={name}
+            type="email"
+            placeholder="Email"
+            value={email}
             onChange={(event) =>
-              setName(
+              setEmail(
                 event.target.value
               )
             }
@@ -277,83 +345,88 @@ export default function AuthPanel({
               p-3
             "
           />
-        )}
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(event) =>
-            setEmail(
-              event.target.value
-            )
-          }
-          className="
-            w-full
-            rounded-xl
-            bg-black
-            p-3
-          "
-        />
+          {mode !== "forgot" && (
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(event) =>
+                setPassword(
+                  event.target.value
+                )
+              }
+              className="
+                w-full
+                rounded-xl
+                bg-black
+                p-3
+              "
+            />
+          )}
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(event) =>
-            setPassword(
-              event.target.value
-            )
-          }
-          className="
-            w-full
-            rounded-xl
-            bg-black
-            p-3
-          "
-        />
+          {mode === "login" && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() =>
+                  setMode("forgot")
+                }
+                className="text-xs font-bold text-emerald-400 transition-colors hover:text-emerald-300 active:scale-95"
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
 
+          <button
+            type="submit"
+            disabled={authBusy}
+            className="
+              w-full
+              rounded-xl
+              bg-green-600
+              py-3
+              font-bold
+              hover:bg-green-700
+              transition-all
+              active:scale-95
+              disabled:opacity-50
+              disabled:cursor-not-allowed
+            "
+          >
+            {authBusy
+              ? "Please wait..."
+              : mode === "signup"
+                ? "Create Account"
+                : mode === "forgot"
+                  ? "Send Reset Link"
+                  : "Sign In"}
+          </button>
+        </form>
+      )}
+
+      {mode !== "forgot" && (
         <button
-          type="submit"
+          onClick={onGoogleLogin}
           disabled={authBusy}
           className="
             w-full
             rounded-xl
-            bg-green-600
+            bg-white
             py-3
             font-bold
-            hover:bg-green-700
+            text-black
+            hover:bg-zinc-200
             transition-all
+            active:scale-95
             disabled:opacity-50
             disabled:cursor-not-allowed
           "
         >
-          {authBusy
-            ? "Please wait..."
-            : mode === "signup"
-              ? "Create Account"
-              : "Sign In"}
+          Continue With Google
         </button>
-      </form>
-
-      <button
-        onClick={onGoogleLogin}
-        disabled={authBusy}
-        className="
-          w-full
-          rounded-xl
-          bg-white
-          py-3
-          font-bold
-          text-black
-          hover:bg-zinc-200
-          transition-all
-          disabled:opacity-50
-          disabled:cursor-not-allowed
-        "
-      >
-        Continue With Google
-      </button>
+      )}
     </div>
   )
 }
