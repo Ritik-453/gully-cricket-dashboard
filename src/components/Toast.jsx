@@ -26,6 +26,9 @@ export default function Toast({
     TONE_STYLES[toast.tone] ||
     TONE_STYLES.info
 
+  const duration =
+    toast.duration || 2500
+
   return (
     <div
       key={toast.id}
@@ -52,13 +55,15 @@ export default function Toast({
           py-3
           shadow-2xl
           font-semibold
-          max-w-sm
+          max-w-md
           ${tone.wrap}
         `}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-start gap-2">
           <span>{tone.icon}</span>
-          <span>{toast.message}</span>
+          <span className="leading-5">
+            {toast.message}
+          </span>
         </div>
 
         <div
@@ -67,9 +72,11 @@ export default function Toast({
             bottom-0
             left-0
             h-1
-            animate-toast-bar
             ${tone.bar}
           `}
+          style={{
+            animation: `toast-bar ${duration}ms linear forwards`,
+          }}
         />
       </div>
     </div>

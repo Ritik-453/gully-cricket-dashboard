@@ -262,22 +262,59 @@ const getAuthErrorMessage = (
   error,
   fallbackMessage
 ) => {
-  switch (error?.code) {
-    case "auth/email-already-in-use":
-      return "This email is already in use."
-    case "auth/invalid-email":
-      return "Enter a valid email address."
-    case "auth/invalid-credential":
-      return "Incorrect email or password."
-    case "auth/popup-closed-by-user":
-      return "Google sign-in was closed before finishing."
-    case "auth/too-many-requests":
-      return "Too many attempts. Please try again later."
-    case "auth/weak-password":
-      return "Choose a stronger password."
-    default:
-      return fallbackMessage
+  const code = error?.code || ""
+
+  const KNOWN_MESSAGES = {
+    "auth/email-already-in-use":
+      "This email is already in use.",
+    "auth/invalid-email":
+      "Enter a valid email address.",
+    "auth/invalid-credential":
+      "Incorrect email or password.",
+    "auth/wrong-password":
+      "Incorrect email or password.",
+    "auth/user-not-found":
+      "No account found with this email.",
+    "auth/user-disabled":
+      "This account has been disabled.",
+    "auth/missing-password":
+      "Enter a password.",
+    "auth/popup-closed-by-user":
+      "Google sign-in was closed before finishing.",
+    "auth/cancelled-popup-request":
+      "Google sign-in was cancelled.",
+    "auth/popup-blocked":
+      "Your browser blocked the Google sign-in popup. Allow popups for this site and try again.",
+    "auth/too-many-requests":
+      "Too many attempts. Please try again later.",
+    "auth/weak-password":
+      "Choose a stronger password (at least 6 characters).",
+    "auth/network-request-failed":
+      "Network error — check your internet connection and try again.",
+    "auth/operation-not-allowed":
+      "Email/password sign-in isn't enabled for this app yet. (Enable it in Firebase Console → Authentication → Sign-in method.)",
+    "auth/unauthorized-domain":
+      "This site's domain isn't authorized for sign-in yet. (Add it in Firebase Console → Authentication → Settings → Authorized domains.)",
+    "auth/configuration-not-found":
+      "Firebase Authentication isn't configured for this project yet.",
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.":
+      "This app's Firebase API key looks invalid. Check the Firebase config.",
+    "auth/invalid-api-key":
+      "This app's Firebase API key looks invalid. Check the Firebase config.",
+    "auth/internal-error":
+      "Firebase rejected the request. Check that Email/Password sign-in is enabled and the API key/config are correct.",
   }
+
+  if (KNOWN_MESSAGES[code]) {
+    return KNOWN_MESSAGES[code]
+  }
+
+  const technicalDetail =
+    code ||
+    error?.message ||
+    "unknown error"
+
+  return `${fallbackMessage} (${technicalDetail})`
 }
 
 export default function App() {
@@ -653,9 +690,21 @@ export default function App() {
     message,
     tone = "info"
   ) => {
+    const duration =
+      tone === "warning"
+        ? Math.min(
+            6000,
+            Math.max(
+              3200,
+              message.length * 55
+            )
+          )
+        : 2500
+
     setToast({
       id: Date.now() +
         Math.random(),
+      duration,
       message,
       tone,
     })
@@ -666,7 +715,7 @@ export default function App() {
           ? null
           : current
       )
-    }, 2500)
+    }, duration)
   }
 
   const triggerCelebration = (
@@ -730,7 +779,8 @@ export default function App() {
         getAuthErrorMessage(
           error,
           "Error updating name"
-        )
+        ),
+        "warning"
       )
       return false
     } finally {
@@ -802,7 +852,8 @@ export default function App() {
         getAuthErrorMessage(
           error,
           "Error creating account"
-        )
+        ),
+        "warning"
       )
       return false
     } finally {
@@ -851,7 +902,8 @@ export default function App() {
         getAuthErrorMessage(
           error,
           "Error signing in"
-        )
+        ),
+        "warning"
       )
       return false
     } finally {
@@ -883,7 +935,8 @@ export default function App() {
         getAuthErrorMessage(
           error,
           "Error signing in with Google"
-        )
+        ),
+        "warning"
       )
       return false
     } finally {
