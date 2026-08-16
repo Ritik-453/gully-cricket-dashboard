@@ -45,6 +45,11 @@ const NAV_ITEMS = [
     to: "/live",
   },
   {
+    label: "Watch",
+    subtitle: "Live Score",
+    to: "/watch",
+  },
+  {
     label: "Archive",
     subtitle: "History",
     to: "/history",
@@ -281,7 +286,7 @@ export default function Navbar({
               hidden
               gap-3
               md:grid
-              md:grid-cols-5
+              md:grid-cols-6
             "
           >
             {NAV_ITEMS.map((item) => (
@@ -339,7 +344,7 @@ export default function Navbar({
           bottom-2
           z-50
           grid
-          grid-cols-5
+          grid-cols-6
           gap-1
           rounded-[1.5rem]
           border
@@ -372,7 +377,7 @@ export default function Navbar({
                 items-center
                 justify-center
                 rounded-xl
-                px-1
+                px-0.5
                 py-2
                 text-center
                 transition-all
@@ -385,14 +390,20 @@ export default function Navbar({
             >
               {item.to === "/live" &&
                 liveMatchActive && (
-                  <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                  <span className="absolute right-1 top-1.5 h-1.5 w-1.5 rounded-full bg-red-500" />
                 )}
 
-              <span className="text-[11px] font-bold leading-tight">
+              {item.to ===
+                "/watch" &&
+                liveMatchActive && (
+                  <span className="absolute right-1 top-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                )}
+
+              <span className="text-[10px] font-bold leading-tight">
                 {item.label}
               </span>
 
-              <span className="mt-0.5 text-[9px] uppercase tracking-[0.16em] leading-tight">
+              <span className="mt-0.5 text-[8px] uppercase tracking-[0.1em] leading-tight">
                 {item.subtitle}
               </span>
             </NavLink>

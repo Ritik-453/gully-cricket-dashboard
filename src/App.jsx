@@ -18,6 +18,8 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  onSnapshot,
+  setDoc,
   updateDoc,
 } from "firebase/firestore"
 
@@ -36,6 +38,7 @@ import Home from "./pages/Home"
 import Teams from "./pages/Teams"
 import History from "./pages/History"
 import LiveMatch from "./pages/LiveMatch"
+import WatchLive from "./pages/WatchLive"
 import Guide from "./pages/Guide"
 import Account from "./pages/Account"
 
@@ -2217,6 +2220,87 @@ export default function App() {
   const overs =
     formatOvers(balls)
 
+  useEffect(() => {
+    if (!teamA) return
+
+    const timeoutId = setTimeout(
+      () => {
+        const liveSnapshot = {
+          teamAName:
+            teamA?.teamName || "",
+          teamBName:
+            teamB?.teamName || "",
+          battingTeamName:
+            battingTeam?.teamName ||
+            "",
+          bowlingTeamName:
+            bowlingTeam?.teamName ||
+            "",
+          innings,
+          maxOvers,
+          score,
+          wickets,
+          balls,
+          overs,
+          freeHit,
+          target,
+          winner,
+          extras,
+          history,
+          fallOfWickets,
+          batters,
+          bowlers,
+          activeBatters,
+          strikerName,
+          currentBowlerName,
+          inningsReady,
+          matchLocked,
+          updatedAt: Date.now(),
+        }
+
+        setDoc(
+          doc(
+            db,
+            "liveScores",
+            "current"
+          ),
+          liveSnapshot
+        ).catch((error) => {
+          console.log(error)
+        })
+      },
+      350
+    )
+
+    return () => {
+      clearTimeout(timeoutId)
+    }
+  }, [
+    teamA,
+    teamB,
+    battingTeam,
+    bowlingTeam,
+    innings,
+    maxOvers,
+    score,
+    wickets,
+    balls,
+    overs,
+    freeHit,
+    target,
+    winner,
+    extras,
+    history,
+    fallOfWickets,
+    batters,
+    bowlers,
+    activeBatters,
+    strikerName,
+    currentBowlerName,
+    inningsReady,
+    matchLocked,
+  ])
+
   const liveMatchSummary = {
     balls,
     battingTeamName:
@@ -2425,6 +2509,11 @@ export default function App() {
                 }
               />
             }
+          />
+
+          <Route
+            path="/watch"
+            element={<WatchLive />}
           />
 
           <Route

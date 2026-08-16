@@ -4,6 +4,7 @@ import {
 } from "react"
 
 import MatchHistory from "../components/MatchHistory"
+import RecordsBoard from "../components/RecordsBoard"
 
 const isOwnedMatch = (
   match,
@@ -21,6 +22,9 @@ export default function History({
 }) {
   const [search, setSearch] =
     useState("")
+
+  const [pageTab, setPageTab] =
+    useState("matches")
 
   const [viewMode, setViewMode] =
     useState(
@@ -66,16 +70,70 @@ export default function History({
 
   return (
     <div className="space-y-6">
-      <div
-        className="
-          rounded-2xl
-          bg-zinc-900
-          p-4
-          md:p-6
-          space-y-4
-          md:space-y-5
-        "
-      >
+      <div className="flex gap-2 rounded-2xl border border-white/10 bg-slate-950/60 p-1.5">
+        <button
+          onClick={() =>
+            setPageTab("matches")
+          }
+          className={`
+            flex-1
+            rounded-xl
+            px-3
+            py-2.5
+            text-sm
+            font-bold
+            transition-all
+            active:scale-95
+            ${
+              pageTab === "matches"
+                ? "bg-blue-500 text-slate-950"
+                : "text-slate-300 hover:bg-white/[0.05]"
+            }
+          `}
+        >
+          Matches
+        </button>
+
+        <button
+          onClick={() =>
+            setPageTab("records")
+          }
+          className={`
+            flex-1
+            rounded-xl
+            px-3
+            py-2.5
+            text-sm
+            font-bold
+            transition-all
+            active:scale-95
+            ${
+              pageTab === "records"
+                ? "bg-amber-500 text-slate-950"
+                : "text-slate-300 hover:bg-white/[0.05]"
+            }
+          `}
+        >
+          Records
+        </button>
+      </div>
+
+      {pageTab === "records" ? (
+        <RecordsBoard
+          matches={matches}
+        />
+      ) : (
+        <div className="animate-pop-in space-y-6">
+          <div
+            className="
+              rounded-2xl
+              bg-zinc-900
+              p-4
+              md:p-6
+              space-y-4
+              md:space-y-5
+            "
+          >
         <div
           className="
             flex
@@ -210,17 +268,19 @@ export default function History({
             Sign in to unlock the `My Matches` view and track your own scoring history separately.
           </div>
         )}
-      </div>
+          </div>
 
-      <MatchHistory
-        currentUser={currentUser}
-        emptyStateMessage={
-          viewMode === "mine"
-            ? "No matches saved by this account yet."
-            : "No matches found for this search."
-        }
-        matches={visibleMatches}
-      />
+          <MatchHistory
+            currentUser={currentUser}
+            emptyStateMessage={
+              viewMode === "mine"
+                ? "No matches saved by this account yet."
+                : "No matches found for this search."
+            }
+            matches={visibleMatches}
+          />
+        </div>
+      )}
     </div>
   )
 }
