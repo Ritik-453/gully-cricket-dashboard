@@ -5,7 +5,6 @@ import {
 } from "react"
 import { Link } from "react-router-dom"
 
-import AuthPanel from "../components/AuthPanel"
 import ImportTeamById from "../components/ImportTeamById"
 import CreateTeam from "./CreateTeam"
 
@@ -234,18 +233,10 @@ function TeamCard({
 }
 
 export default function Teams({
-  authBusy,
-  authReady,
   createTeam,
   currentUser,
   deleteTeam,
-  emailLogin,
-  emailSignup,
-  forgotPassword,
-  googleLogin,
-  logout,
   teams,
-  updateCurrentUserName,
   updateTeam,
 }) {
   const [editingTeam, setEditingTeam] =
@@ -468,31 +459,7 @@ export default function Teams({
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <div className="space-y-6">
-          <AuthPanel
-            authBusy={authBusy}
-            authReady={authReady}
-            currentUser={currentUser}
-            onEmailLogin={emailLogin}
-            onEmailSignup={emailSignup}
-            onForgotPassword={
-              forgotPassword
-            }
-            onGoogleLogin={googleLogin}
-            onLogout={logout}
-            onUpdateName={
-              updateCurrentUserName
-            }
-          />
-
-          {!currentUser && (
-            <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/78 p-5 text-sm leading-7 text-slate-400">
-              Sign in to unlock team creation and editing. Public teams stay visible so you can still inspect squads before creating your own.
-            </div>
-          )}
-        </div>
-
+      <section>
         <div>
           {currentUser ? (
             <div className="space-y-4">
@@ -588,7 +555,7 @@ export default function Teams({
             </div>
           ) : (
             <div className="rounded-[1.75rem] border border-dashed border-white/10 bg-slate-950/60 p-8 text-center text-slate-400">
-              Account access sits on the left. Once you sign in, the team builder will appear here.
+              Sign in from the account icon at the top of the page to unlock team creation, editing, and importing. You can still browse every public team below.
             </div>
           )}
         </div>

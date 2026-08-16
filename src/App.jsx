@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from "react"
 import { Routes, Route } from "react-router-dom"
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updatePassword,
   updateProfile,
 } from "firebase/auth"
 import {
@@ -34,6 +37,7 @@ import Teams from "./pages/Teams"
 import History from "./pages/History"
 import LiveMatch from "./pages/LiveMatch"
 import Guide from "./pages/Guide"
+import Account from "./pages/Account"
 
 const INITIAL_EXTRAS = {
   wides: 0,
@@ -258,6 +262,12 @@ const mapAuthUser = (user) => ({
     user.email?.split("@")[0] ||
     "Scorer",
   email: user.email || "",
+  providerIds: (
+    user.providerData || []
+  ).map(
+    (provider) =>
+      provider.providerId
+  ),
 })
 
 const getAuthErrorMessage = (
@@ -878,6 +888,13 @@ export default function App() {
         email:
           credentials.user.email ||
           trimmedEmail,
+        providerIds: (
+          credentials.user
+            .providerData || []
+        ).map(
+          (provider) =>
+            provider.providerId
+        ),
       })
 
       markEntered()
@@ -1022,6 +1039,79 @@ export default function App() {
         getAuthErrorMessage(
           error,
           "Error sending reset email"
+        ),
+        "warning"
+      )
+      return false
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const changePassword = async ({
+    currentPassword,
+    newPassword,
+  }) => {
+    if (
+      !auth.currentUser ||
+      !auth.currentUser.email
+    ) {
+      showToast(
+        "Sign in again before changing your password.",
+        "warning"
+      )
+      return false
+    }
+
+    if (
+      !currentPassword ||
+      !newPassword
+    ) {
+      showToast(
+        "Fill in both your current and new password.",
+        "warning"
+      )
+      return false
+    }
+
+    if (newPassword.length < 6) {
+      showToast(
+        "New password must be at least 6 characters.",
+        "warning"
+      )
+      return false
+    }
+
+    setAuthBusy(true)
+
+    try {
+      const credential =
+        EmailAuthProvider.credential(
+          auth.currentUser.email,
+          currentPassword
+        )
+
+      await reauthenticateWithCredential(
+        auth.currentUser,
+        credential
+      )
+
+      await updatePassword(
+        auth.currentUser,
+        newPassword
+      )
+
+      showToast(
+        "Password updated successfully"
+      )
+
+      return true
+    } catch (error) {
+      console.log(error)
+      showToast(
+        getAuthErrorMessage(
+          error,
+          "Error updating password"
         ),
         "warning"
       )
@@ -2231,22 +2321,10 @@ export default function App() {
             path="/teams"
             element={
               <Teams
-                authBusy={authBusy}
-                authReady={authReady}
                 createTeam={createTeam}
                 currentUser={currentUser}
                 deleteTeam={deleteTeam}
-                emailLogin={emailLogin}
-                emailSignup={emailSignup}
-                forgotPassword={
-                  forgotPassword
-                }
-                googleLogin={googleLogin}
-                logout={logout}
                 teams={teams}
-                updateCurrentUserName={
-                  updateCurrentUserName
-                }
                 updateTeam={updateTeam}
               />
             }
@@ -2352,6 +2430,30 @@ export default function App() {
           <Route
             path="/guide"
             element={<Guide />}
+          />
+
+          <Route
+            path="/account"
+            element={
+              <Account
+                authBusy={authBusy}
+                authReady={authReady}
+                changePassword={
+                  changePassword
+                }
+                currentUser={currentUser}
+                emailLogin={emailLogin}
+                emailSignup={emailSignup}
+                forgotPassword={
+                  forgotPassword
+                }
+                googleLogin={googleLogin}
+                logout={logout}
+                updateCurrentUserName={
+                  updateCurrentUserName
+                }
+              />
+            }
           />
         </Routes>
       </div>
